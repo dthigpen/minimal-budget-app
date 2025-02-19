@@ -1,0 +1,30 @@
+{
+  "name": "minimal-budget-app",
+  "version": "1.0.0",
+  "description": "A minimal web based budgeting application",
+  "main": "index.js",
+  "scripts": {
+    "dev": "bash scripts/dev.sh",
+    "build": "vite build",
+    "preview": "vite preview",
+    "vender": "bash scripts/vender.sh",
+    "format": "npx prettier --config .prettierrc.json --write ./public/ '!**/vender'",
+    "deploy": "npx gh-pages -d public"
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@eslint/js": "^9.11.1",
+    "@web/dev-server": "^0.4.6",
+    "eslint": "^9.11.1",
+    "gh-pages": "^6.3.0",
+    "globals": "^15.9.0",
+    "prettier": "^3.3.3"
+  },
+  "dependencies": {
+    "@picocss/pico": "^2.0.6",
+    "vanjs-core": "^1.5.3",
+    "vanjs-ext": "^0.6.2",
+    "vanjs-ui": "^0.11.7"
+  }
+}
