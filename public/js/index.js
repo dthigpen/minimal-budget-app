@@ -113,6 +113,19 @@ function addValue(arr, value) {
   return value;
 }
 
+function deleteValue(arr, valueId) {
+  let deleted = false;
+  for (let i = 0; i < arr.length; i++) {
+    if (arr[i].id === valueId) {
+      delete arr[i];
+      deleted = true;
+      break;
+    }
+  }
+  if (!deleted) {
+    console.log(`Value not found with id ${valueId} in ${JSON.stringify(arr)}`);
+  }
+}
 function updateValue(arr, value) {
   if (value.id === undefined || value.id === null) {
     throw Error(`No id on object: ${JSON.stringify(value)}`);
@@ -152,6 +165,34 @@ function saveStateToLocalStorage(stateObject) {
 const App = () => {
   resetLocalStorage();
   let state = loadStateFromLocalStorage();
+
+  const confirmDialog = initDialog(
+    (ctx) => ({
+      title: ctx.title ?? '',
+      buttons: [
+        {
+          text: 'No',
+          onclick: () => {
+            if (ctx.onDeny) {
+              ctx.onDeny();
+            }
+            confirmDialog.close();
+          },
+        },
+        {
+          text: 'Yes',
+          onclick: () => {
+            if (ctx.onConfirm) {
+              ctx.onConfirm();
+            }
+            confirmDialog.close();
+          },
+        },
+      ],
+    }),
+
+    (ctx) => p(ctx.description ?? 'Are you sure you want to do this?'),
+  );
   const categoryDialog = CategoryDialog({
     onSave: (c) => {
       console.log(`Saving category: ${JSON.stringify(c)}`);
@@ -162,6 +203,19 @@ const App = () => {
         addValue(state.categories, c);
       }
     },
+    onDelete: (c) => {
+      confirmDialog.open({
+        title: 'Delete category',
+        description: `Are you sure you want to delete ${c.name}?`,
+        onDeny: () => {
+          console.debug('Category not deleted');
+        },
+        onConfirm: () => {
+          categoryDialog.close();
+          deleteValue(state.categories, c.id);
+        },
+      });
+    },
   });
 
   van.derive(() => {
@@ -169,30 +223,6 @@ const App = () => {
     saveStateToLocalStorage(state);
   });
 
-  const fooDialog = initDialog(
-    (ctx) => ({
-      title: ctx.store?.text ?? 'No Title',
-      buttons: [
-        {
-          text: 'Save',
-          onclick: () => {
-            fooDialog.close();
-          },
-        },
-      ],
-    }),
-    (ctx) => {
-      const inp = input({
-        oninput: () => {
-          console.log(`inp Ctx: ${JSON.stringify(ctx)}`);
-          ctx.store.text = inp.value;
-          console.debug(`input value: ${this.value}`);
-        },
-        value: ctx.store?.text ?? '',
-      });
-      return div(inp);
-    },
-  );
   const selectedMonthString = van.state('');
   const monthPickerInput = input({
     type: 'month',

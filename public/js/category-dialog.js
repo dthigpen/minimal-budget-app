@@ -37,7 +37,8 @@ const {
   span,
 } = van.tags;
 
-export const CategoryDialog = ({ onSave }) => {
+export const CategoryDialog = ({ onSave, onDelete }) => {
+  const buttons = [];
   const categoryDialog = initDialog(
     (ctx) => {
       const isNew = !Number.isInteger(ctx.category?.id);
@@ -47,8 +48,18 @@ export const CategoryDialog = ({ onSave }) => {
         buttons: [
           {
             text: 'Cancel',
+            class: 'secondary',
             onclick: () => {
               categoryDialog.close();
+            },
+          },
+          {
+            text: 'Delete',
+            class: 'contrast',
+            onclick: () => {
+              if (onDelete) {
+                onDelete(ctx.category);
+              }
             },
           },
           {
