@@ -1,5 +1,6 @@
 // import van from './vender/van.js';
 import van from './vender/van.debug.js';
+import { MonthPicker } from './month-picker.js';
 import { CategoryDialog } from './category-dialog.js';
 import { CategoriesLists } from './categories-lists.js';
 import { TransactionsList } from './transactions-list.js';
@@ -8,6 +9,8 @@ import { Modal, MessageBoard, Tabs, Banner } from './vender/van-ui.js';
 import * as vanX from './vender/van-x.js';
 const {
   a,
+  select,
+  option,
   details,
   summary,
   label,
@@ -196,31 +199,14 @@ const App = () => {
     'aria-label': 'Month',
     oninput: () => (selectedMonthString.val = this.value),
   });
-  const store = { text: 'nada' };
   return div(
     header(Nav()),
     main(
-      { class: 'container' },
-      // button(
-      //   { onclick: () => fooDialog.open({ text: 'Hello there!', store }) },
-      //   'Open Foo',
-      // ),
-      div(
-        {
-          class: 'month-picker',
-        },
-        input({
-          type: 'month',
-          'aria-label': 'Month Picker',
-          value: '2025-02',
-        }),
-      ),
+      MonthPicker(),
       () =>
         CategoriesLists({
           state,
           onClickCategory: (c, i) => {
-            // console.debug(`Clicked: ${JSON.stringify(c.val)}`)
-            // alert(`Clicked: ${JSON.stringify(c.val)}`)
             categoryDialog.open({
               category: JSON.parse(JSON.stringify(c)),
             });
