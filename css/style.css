@@ -96,9 +96,13 @@ main.container {
 }
 .month-picker {
   display: flex;
-  flex-direction: column;
+  justify-content: center;
   align-items: center;
-  max-width: 20rem;
+  gap: 1rem;
+
+  > * {
+    max-width: 10rem;
+  }
 }
 .dialogtitle {
   font-size: 1.3rem;
