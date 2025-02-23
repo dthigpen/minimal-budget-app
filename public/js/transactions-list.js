@@ -3,13 +3,13 @@ import van from './vender/van.debug.js';
 import { formatMoney } from './util.js';
 const { div, span, button, h3, article } = van.tags;
 
-const TransactionRow = ({ transaction, onClickRow }) => {
-  onClickRow ??= () => {};
+const TransactionRow = ({ transaction, onClick }) => {
+  onClick ??= () => {};
   const isNegative = transaction.amount < 0;
   return article(
     {
       class: 'transaction-row',
-      onclick: () => onClickRow(transaction),
+      onclick: () => onClick(transaction),
     },
     div(
       {
@@ -59,9 +59,8 @@ const TransactionRow = ({ transaction, onClickRow }) => {
     ),
   );
 };
-export const TransactionsList = ({ state }) => {
+export const TransactionsList = ({ state, onClickRow }) => {
   console.debug(`TransactionList ${state.transactions.length} transactions`);
-  console.debug(`Transactions ${JSON.stringify(state.transactions)}`);
   return div(
     {
       class: 'transactions-list',
@@ -105,7 +104,9 @@ export const TransactionsList = ({ state }) => {
         class: 'transactionsholder',
       },
 
-      ...state.transactions.map((t) => TransactionRow({ transaction: t })),
+      ...state.transactions.map((t) =>
+        TransactionRow({ transaction: t, onClick: onClickRow }),
+      ),
     ),
   );
 };

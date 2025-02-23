@@ -5,6 +5,10 @@ export function formatMoney(amount = 0.0, currencySymbol = '$') {
   return currencySymbol + amount.toFixed(2);
 }
 
+export function formatDate(date) {
+  return `${d.getFullYear().padStart(4, '0')}-${(d.getMonth() + 1).padStart(2, '0')}-${d.getDate().padStart(2, '0')}`;
+}
+
 /**
  * Simple object check.
  * @param item
@@ -105,15 +109,17 @@ export function initDialog(initialConfig = null, renderFn) {
               // content
               ...(Array.isArray(children) ? children : [children]),
               footer(
-                config?.buttons?.map((b) =>
-                  button(
-                    {
-                      onclick: b.onclick,
-                      class: b.class ?? '',
-                    },
-                    b.text,
+                config?.buttons
+                  ?.filter((b) => b)
+                  ?.map((b) =>
+                    button(
+                      {
+                        onclick: b.onclick,
+                        class: b.class ?? '',
+                      },
+                      b.text,
+                    ),
                   ),
-                ),
               ),
             ),
           ),

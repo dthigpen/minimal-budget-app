@@ -1,6 +1,6 @@
 import { initDialog } from './util.js';
 import van from './vender/van.debug.js';
-import { Modal, MessageBoard, Tabs, Banner } from './vender/van-ui.js';
+import { Modal } from './vender/van-ui.js';
 import * as vanX from './vender/van-x.js';
 const {
   a,
@@ -38,7 +38,11 @@ const {
 } = van.tags;
 
 export const CategoryDialog = ({ onSave, onDelete }) => {
-  const buttons = [];
+  const defaultCategoryValues = {
+    name: '',
+    type: 'expense',
+    goal: undefined,
+  };
   const categoryDialog = initDialog(
     (ctx) => {
       const isNew = !Number.isInteger(ctx.category?.id);
@@ -53,15 +57,17 @@ export const CategoryDialog = ({ onSave, onDelete }) => {
               categoryDialog.close();
             },
           },
-          {
-            text: 'Delete',
-            class: 'contrast',
-            onclick: () => {
-              if (onDelete) {
-                onDelete(ctx.category);
-              }
-            },
-          },
+          isNew
+            ? null
+            : {
+                text: 'Delete',
+                class: 'contrast',
+                onclick: () => {
+                  if (onDelete) {
+                    onDelete(ctx.category);
+                  }
+                },
+              },
           {
             text: isNew ? 'Create' : 'Save',
             onclick: () => {
@@ -72,13 +78,13 @@ export const CategoryDialog = ({ onSave, onDelete }) => {
                 return;
               }
               const newCategory = {
+                ...defaultCategoryValues,
                 ...(ctx.category ?? {}),
                 ...ctx.newCategory,
               };
               if (onSave) {
                 onSave(newCategory);
               }
-              categoryDialog.close();
             },
           },
         ],

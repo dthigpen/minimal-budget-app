@@ -4,6 +4,7 @@ import { MonthPicker } from './month-picker.js';
 import { CategoryDialog } from './category-dialog.js';
 import { CategoriesLists } from './categories-lists.js';
 import { TransactionsList } from './transactions-list.js';
+import { TransactionDialog } from './transaction-dialog.js';
 import { formatMoney, initDialog } from './util.js';
 import { Modal, MessageBoard, Tabs, Banner } from './vender/van-ui.js';
 import * as vanX from './vender/van-x.js';
@@ -98,6 +99,7 @@ const DUMMY_DATA = {
       date: '2025-01-03',
       amount: 1070.29,
       account: 'Checking Account',
+      category: 'Job',
     },
   ],
 };
@@ -202,6 +204,7 @@ const App = () => {
       } else {
         addValue(state.categories, c);
       }
+      categoryDialog.close();
     },
     onDelete: (c) => {
       confirmDialog.open({
@@ -217,7 +220,34 @@ const App = () => {
       });
     },
   });
-
+  const transactionDialog = TransactionDialog({
+    onSave: (t) => {
+      console.log(`Saving transaction: ${JSON.stringify(t)}`);
+      // alert(`Saving transaction: ${JSON.stringify(c)}`);
+      if (Number.isInteger(t.id)) {
+        updateValue(state.transactions, t);
+      } else {
+        addValue(state.transactions, t);
+      }
+      transactionDialog.close();
+    },
+    onDelete: (t) => {
+      confirmDialog.open({
+        title: 'Delete transaction',
+        description: `Are you sure you want to delete ${t.description}?`,
+        onDeny: () => {
+          console.debug('Transaction not deleted');
+        },
+        onConfirm: () => {
+          transactionDialog.close();
+          deleteValue(state.transactions, t.id);
+        },
+      });
+    },
+    onNewCategory: () => {
+      categoryDialog.open({});
+    },
+  });
   van.derive(() => {
     console.debug(`Categories updated: ${JSON.stringify(state.categories)}`);
     saveStateToLocalStorage(state);
@@ -229,6 +259,13 @@ const App = () => {
     'aria-label': 'Month',
     oninput: () => (selectedMonthString.val = this.value),
   });
+
+  const accounts = van.derive(() => [
+    ...new Set(state.transactions.map((t) => t.account).filter((a) => a)),
+  ]);
+  const categoryNames = van.derive(() => [
+    ...new Set(state.categories.map((c) => c.name).filter((c) => c)),
+  ]);
   return div(
     header(Nav()),
     main(
@@ -248,7 +285,18 @@ const App = () => {
           },
         }),
 
-      () => TransactionsList({ state }),
+      () =>
+        TransactionsList({
+          state,
+          onClickRow: (t) => {
+            console.log(`Clicked: ${JSON.stringify(t)}`);
+            transactionDialog.open({
+              accounts: accounts.val,
+              categories: categoryNames.val,
+              transaction: JSON.parse(JSON.stringify(t)),
+            });
+          },
+        }),
     ),
   );
 };
