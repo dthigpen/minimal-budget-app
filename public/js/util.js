@@ -54,3 +54,26 @@ export const Table = ({ head, data, onRowClick = (r) => {} }) => {
     ),
   );
 };
+
+export function setupValidation(
+  element,
+  { invalid, reportImmediately = true },
+) {
+  function oninput() {
+    element.setAttribute('aria-invalid', false);
+    const invalidMsg = invalid.call(element, element);
+    if (invalidMsg) {
+      element.setCustomValidity(invalidMsg);
+    }
+    if (element.checkValidity()) {
+      if (reportImmediately) {
+        element.reportValidity();
+      }
+    }
+  }
+  function oninvalid() {
+    element.setAttribute('aria-invalid', true);
+  }
+  element.oninput = oninput;
+  element.oninvalid = oninvalid;
+}

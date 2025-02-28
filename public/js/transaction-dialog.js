@@ -1,4 +1,4 @@
-import { formatDate } from './util.js';
+import { formatDate, setupValidation } from './util.js';
 import { initDialogWithButtons } from './dialog-util.js';
 import van from './vender/van.debug.js';
 import { Modal } from './vender/van-ui.js';
@@ -51,7 +51,6 @@ export const TransactionDialog = (states) => {
     () => !Number.isInteger(states.transaction.val?.id),
   );
   states.newTransaction = {};
-  // title: isNew ? 'New Transaction' : 'Edit Transaction',
 
   return initDialogWithButtons(
     states,
@@ -121,7 +120,90 @@ export const TransactionDialog = (states) => {
         }
         return els;
       };
+      const descriptionInput = input({
+        type: 'text',
+        name: 'description',
+        value: s.transaction?.val?.description ?? '',
+        oninput: function () {
+          s.newTransaction.description = this.value;
+        },
+      });
+      const amountInput = input({
+        type: 'number',
+        step: 0.01,
+        name: 'amount',
+        value: s.transaction?.val?.amount ?? '',
+        oninput: function () {
+          s.newTransaction.amount = Number(this.value);
+        },
+      });
 
+      const dateInput = input({
+        type: 'date',
+        name: 'date',
+        value: s.transaction?.val?.date ?? '',
+        oninput: function () {
+          s.newTransaction.date = formatDate(new Date(this.value));
+        },
+      });
+      const accountInput = input({
+        type: 'text',
+        name: 'account',
+        list: 'accounts-list',
+        value: s.transaction?.val?.account ?? '',
+        oninput: function () {
+          try {
+            s.newTransaction.date = formatDate(new Date(this.value));
+          } catch (err) {
+            s.newTransaction.date = '';
+          }
+        },
+      });
+      const elementValidations = [
+        [
+          descriptionInput,
+          {
+            invalid: (el) => {
+              if (!el.value.trim()) {
+                return 'Description must not be empty';
+              }
+            },
+          },
+        ],
+        [
+          amountInput,
+          {
+            invalid: (el) => {
+              if (!el.value.trim()) {
+                return 'Amount must not be empty';
+              }
+            },
+          },
+        ],
+        [
+          dateInput,
+          {
+            invalid: (el) => {
+              if (!el.value.trim()) {
+                return 'Date must not be empty';
+              }
+            },
+          },
+        ],
+        [
+          accountInput,
+          {
+            invalid: (el) => {
+              if (!el.value.trim()) {
+                return 'Account must not be empty';
+              }
+            },
+          },
+        ],
+      ];
+      for (const [el, validationConfig] of elementValidations) {
+        setupValidation(el, validationConfig);
+      }
       return div(
         {
           class: 'transaction-dialog',
@@ -133,56 +215,10 @@ export const TransactionDialog = (states) => {
               e.preventDefault();
             },
           },
-          label(
-            'Description',
-            input({
-              type: 'text',
-              name: 'description',
-              value: s.transaction?.val?.description ?? '',
-              oninput: function () {
-                s.newTransaction.description = this.value;
-              },
-            }),
-          ),
-          label(
-            'Amount',
-            input({
-              type: 'number',
-              step: 0.01,
-              name: 'amount',
-              value: s.transaction?.val?.amount ?? '',
-              oninput: function () {
-                s.newTransaction.amount = Number(this.value);
-              },
-            }),
-          ),
-          label(
-            'Date',
-            input({
-              type: 'date',
-              name: 'date',
-              value: s.transaction?.val?.date ?? '',
-              oninput: function () {
-                s.newTransaction.date = formatDate(new Date(this.value));
-              },
-            }),
-          ),
-          label(
-            'Account',
-            input({
-              type: 'text',
-              name: 'account',
-              list: 'accounts-list',
-              value: s.transaction?.val?.account ?? '',
-              oninput: function () {
-                try {
-                  s.newTransaction.date = formatDate(new Date(this.value));
-                } catch (err) {
-                  s.newTransaction.date = '';
-                }
-              },
-            }),
-          ),
+          label('Description', descriptionInput),
+          label('Amount', amountInput),
+          label('Date', dateInput),
+          label('Account', accountInput),
           () =>
             datalist(
               {

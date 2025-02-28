@@ -176,6 +176,12 @@ function openDialog(closed, items, title) {
 const App = () => {
   resetLocalStorage();
   let state = loadStateFromLocalStorage();
+  const accounts = van.derive(() => [
+    ...new Set(state.transactions.map((t) => t.account).filter((a) => a)),
+  ]);
+  const categoryNames = van.derive(() => [
+    ...new Set(state.categories.map((c) => c.name).filter((c) => c)),
+  ]);
   const confirmDialog = initDialogWithButtons(
     {
       title: van.state('Confirmation'),
@@ -213,6 +219,7 @@ const App = () => {
 
   const categoryDialog = CategoryDialog({
     category: null,
+    categoryNames: categoryNames,
     onSave: (c) => {
       console.log(`Saving category: ${JSON.stringify(c)}`);
       // alert(`Saving category: ${JSON.stringify(c)}`);
@@ -234,28 +241,8 @@ const App = () => {
         deleteValue(state.categories, c.id);
       };
       confirmDialog.open();
-
-      /*
-      confirmDialog.open({
-        title: 'Delete category',
-        description: `Are you sure you want to delete ${c.name}?`,
-        onDeny: () => {
-          console.debug('Category not deleted');
-        },
-        onConfirm: () => {
-          categoryDialog.close();
-          deleteValue(state.categories, c.id);
-        },
-      });
-      */
     },
   });
-  const accounts = van.derive(() => [
-    ...new Set(state.transactions.map((t) => t.account).filter((a) => a)),
-  ]);
-  const categoryNames = van.derive(() => [
-    ...new Set(state.categories.map((c) => c.name).filter((c) => c)),
-  ]);
 
   const transactionDialog = TransactionDialog({
     accounts: accounts,
@@ -345,24 +332,6 @@ const App = () => {
   return div(
     header(Nav()),
     main(
-      () =>
-        button(
-          {
-            onclick: () => {
-              console.log('Dialog clicked');
-              fooDialog.open({ updateValues: { title: 'nnnnnnn' } });
-              setTimeout(() => {
-                console.log('Setting title');
-                fooTitle.val = 'New title';
-              }, 2000);
-              setTimeout(() => {
-                console.log('Setting items');
-                fooItems.val = [...fooItems.val.splice(2)];
-              }, 3000);
-            },
-          },
-          'open dialog',
-        ),
       MonthPicker(),
       () =>
         CategoriesLists({
@@ -376,7 +345,7 @@ const App = () => {
           onClickViewAll: () => console.debug(`View All clicked`),
           onClickNew: () => {
             console.log('New Category clicked');
-            categoryDialog.open({});
+            categoryDialog.open({ category: {} });
           },
         }),
 
