@@ -1,4 +1,4 @@
-import { initDialog } from './util.js';
+import { initDialog, initDialogWithButtons } from './dialog-util.js';
 import van from './vender/van.debug.js';
 import { Modal } from './vender/van-ui.js';
 import * as vanX from './vender/van-x.js';
@@ -37,73 +37,83 @@ const {
   span,
 } = van.tags;
 
-export const CategoryDialog = ({ onSave, onDelete }) => {
+export const CategoryDialog = (states) => {
   const defaultCategoryValues = {
     name: '',
     type: 'expense',
     goal: undefined,
   };
-  const categoryDialog = initDialog(
-    (ctx) => {
-      const isNew = !Number.isInteger(ctx.category?.id);
-      ctx.newCategory ??= {};
-      return {
-        title: isNew ? 'New Category' : 'Edit Category',
-        buttons: [
-          {
-            text: 'Cancel',
-            class: 'secondary',
-            onclick: () => {
-              categoryDialog.close();
-            },
-          },
-          isNew
-            ? null
-            : {
-                text: 'Delete',
-                class: 'contrast',
-                onclick: () => {
-                  if (onDelete) {
-                    onDelete(ctx.category);
-                  }
-                },
-              },
-          {
-            text: isNew ? 'Create' : 'Save',
-            onclick: () => {
-              // TODO figure out how to use form variable instead of queryselector
-              const categoryForm = document.querySelector('#category-form');
-              if (!categoryForm.checkValidity()) {
-                categoryForm.reportValidity();
-                return;
-              }
-              const newCategory = {
-                ...defaultCategoryValues,
-                ...(ctx.category ?? {}),
-                ...ctx.newCategory,
-              };
-              if (onSave) {
-                onSave(newCategory);
-              }
-            },
-          },
-        ],
-      };
-    },
-    (ctx) => {
-      ctx.newCategory ??= {};
-      const isNew = !Number.isInteger(ctx.category?.id);
+  states.category ??= van.state({});
+  states.isNew = van.derive(() => !Number.isInteger(states.category.val?.id));
+  states.isExpenseState = van.derive(
+    () => states.isNew.val || states.category.val?.type === 'expense',
+  );
+  states.newCategory = {};
+
+  return initDialogWithButtons(
+    states,
+    (s, dialogActions) => [
+      {
+        text: 'Cancel',
+        class: 'secondary',
+        onclick: () => {
+          dialogActions.close();
+        },
+      },
+      {
+        text: 'Delete',
+        class: () => (s.isNew.val ? '-gone' : 'contrast'),
+        onclick: () => {
+          if (s.onDelete) {
+            s.onDelete(s.category.val);
+          }
+        },
+      },
+      {
+        text: s.isNew.val ? 'Create' : 'Save',
+        onclick: () => {
+          // TODO figure out how to use form variable instead of queryselector
+          const categoryForm = document.querySelector('#category-form');
+          if (!categoryForm.checkValidity()) {
+            categoryForm.reportValidity();
+            return;
+          }
+          const newCategory = {
+            ...defaultCategoryValues,
+            ...(s.category.val ?? {}),
+            ...s.newCategory,
+          };
+          if (s.onSave) {
+            s.onSave(newCategory);
+          }
+        },
+      },
+    ],
+    (s, dialogActions) => {
+      s.newCategory ??= {};
+      console.log(`Category on render: ${JSON.stringify(s.category.val)}`);
       const incomeGoalText = 'I want to make at least';
       const expenseGoalText = 'I want to spend under';
-      const isExpenseState = isNew || ctx.category?.type === 'expense';
+      // const isExpenseState = van.derive(
+      //   () => s.isNew.val || s.category.val?.type === 'expense',
+      // );
+      console.log(
+        `isNew: ${states.isNew.val} type: ${states.category.val?.type}`,
+      );
+      const isExpenseState =
+        states.isNew.val || states.category.val?.type === 'expense';
+      const isIncomeStateFn = () =>
+        !(s.isNew.val || s.category.val?.type === 'expense');
+      const isExpenseStateFn = () =>
+        s.isNew.val || s.category.val?.type === 'expense';
       const nameInput = input({
         type: 'text',
         placeholder: 'Groceries',
         required: true,
         name: 'category-name',
         minlength: 1,
-        value: ctx.category?.name ?? '',
-        oninput: () => (ctx.newCategory.name = nameInput.value),
+        value: s.category.val?.name ?? '',
+        oninput: () => (s.newCategory.name = nameInput.value),
       });
       const goalLabel = span({ id: 'category-goal-text' }, expenseGoalText);
 
@@ -112,12 +122,12 @@ export const CategoryDialog = ({ onSave, onDelete }) => {
         id: 'category-type-income',
         name: 'category-type',
         value: 'income',
-        checked: !isExpenseState,
+        checked: isIncomeStateFn,
         onchange: function (e) {
           if (this.value === 'income') {
             goalLabel.textContent = incomeGoalText;
           }
-          ctx.newCategory.type = this.value;
+          s.newCategory.type = this.value;
         },
       });
       return div(
@@ -142,12 +152,12 @@ export const CategoryDialog = ({ onSave, onDelete }) => {
               id: 'category-type-expense',
               name: 'category-type',
               value: 'expense',
-              checked: isExpenseState,
+              checked: isExpenseStateFn,
               onchange: function (e) {
                 if (this.value === 'expense') {
                   goalLabel.textContent = expenseGoalText;
                 }
-                ctx.newcategory.type = this.value;
+                s.newcategory.type = this.value;
               },
             }),
             label({ htmlFor: 'category-type-expense' }, 'Expense'),
@@ -159,9 +169,9 @@ export const CategoryDialog = ({ onSave, onDelete }) => {
               placeholder: '350.00',
               name: 'category-goal',
               min: 0,
-              value: ctx.category?.goal ?? '',
+              value: s.category.val?.goal ?? '',
               oninput: function () {
-                ctx.newCategory.goal = Number(this.value);
+                s.newCategory.goal = Number(this.value);
               },
             }),
           ),
@@ -169,5 +179,4 @@ export const CategoryDialog = ({ onSave, onDelete }) => {
       );
     },
   );
-  return categoryDialog;
 };

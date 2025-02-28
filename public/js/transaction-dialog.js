@@ -1,4 +1,5 @@
-import { initDialog, formatDate } from './util.js';
+import { formatDate } from './util.js';
+import { initDialogWithButtons } from './dialog-util.js';
 import van from './vender/van.debug.js';
 import { Modal } from './vender/van-ui.js';
 import * as vanX from './vender/van-x.js';
@@ -40,80 +41,87 @@ const {
   datalist,
 } = van.tags;
 
-export const TransactionDialog = ({ onSave, onDelete, onNewCategory }) => {
-  const transactionDialog = initDialog(
-    (ctx) => {
-      const isNew = !Number.isInteger(ctx.transaction?.id);
-      ctx.newTransaction ??= {};
-      return {
-        title: isNew ? 'New Transaction' : 'Edit Transaction',
-        buttons: [
-          {
-            text: 'Cancel',
-            class: 'secondary',
-            onclick: () => {
-              transactionDialog.close();
-            },
-          },
-          isNew
-            ? null
-            : {
-                text: 'Delete',
-                class: 'contrast',
-                onclick: () => {
-                  if (onDelete) {
-                    onDelete(ctx.transaction);
-                  }
-                },
-              },
-          {
-            text: isNew ? 'Create' : 'Save',
-            onclick: () => {
-              // TODO figure out how to use form variable instead of queryselector
-              const transactionForm =
-                document.querySelector('#transaction-form');
-              if (!transactionForm.checkValidity()) {
-                transactionForm.reportValidity();
-                return;
-              }
-              const newTransaction = {
-                ...(ctx.transaction ?? {}),
-                ...ctx.newTransaction,
-              };
-              if (onSave) {
-                onSave(newTransaction);
-              }
-            },
-          },
-        ],
-      };
-    },
-    (ctx) => {
-      ctx.newTransaction ??= {};
-      const categories = [
+export const TransactionDialog = (states) => {
+  // { onSave, onDelete, onNewCategory }
+  // default states if needed before initing dialog
+  states.transaction ??= van.state({});
+  states.categories ??= van.state([]);
+  states.accounts ??= van.state([]);
+  states.isNew = van.derive(
+    () => !Number.isInteger(states.transaction.val?.id),
+  );
+  states.newTransaction = {};
+  // title: isNew ? 'New Transaction' : 'Edit Transaction',
+
+  return initDialogWithButtons(
+    states,
+    (s, dialogActions) => [
+      {
+        text: 'Cancel',
+        class: 'secondary',
+        onclick: () => {
+          dialogActions.close();
+        },
+      },
+      {
+        text: 'Delete',
+        class: () => (s.isNew.val ? '-gone' : 'contrast'),
+        onclick: () => {
+          if (s.onDelete) {
+            s.onDelete(s.transaction.val);
+          }
+        },
+      },
+      {
+        text: () => (s.isNew.val ? 'Create' : 'Save'),
+        onclick: () => {
+          // TODO figure out how to use form variable instead of queryselector
+          const transactionForm = document.querySelector('#transaction-form');
+          if (!transactionForm.checkValidity()) {
+            transactionForm.reportValidity();
+            return;
+          }
+          const newTransaction = {
+            ...(s.transaction.val ?? {}),
+            ...s.newTransaction,
+          };
+          if (s.onSave) {
+            s.onSave(newTransaction);
+          }
+        },
+      },
+    ],
+    (s, dialogActions) => {
+      console.log(`isNew: ${s.isNew.val}`);
+      s.newTransaction = {};
+      const categoryNames = van.derive(() => [
         'Uncategorized',
         ...new Set(
-          (ctx.categories ?? []).filter(
+          (s.categories.val ?? []).filter(
             (c) => c.toLowerCase() !== 'uncategorized',
           ),
         ),
-      ];
-      const categoriesDom = categories.map((c) => option({ value: c }, c));
-      let foundCategory = false;
-      if (ctx.transaction?.category) {
-        for (const o of categoriesDom) {
-          if (ctx.transaction.category === o.value) {
-            o.selected = true;
-            foundCategory = false;
-            break;
+      ]);
+      // turns category names into select options and preselects the right one
+      const categoriesDomFn = () => {
+        const els = categoryNames.val.map((c) => option({ value: c }, c));
+        let foundCategory = false;
+        if (s.transaction.val.category) {
+          for (const o of els) {
+            if (s.transaction.val.category === o.value) {
+              o.selected = true;
+              foundCategory = true;
+              break;
+            }
           }
         }
-      }
-      if (!foundCategory) {
-        // select uncategorized
-        categoriesDom[0].selected = true;
-      }
-      const isNew = !Number.isInteger(ctx.transaction?.id);
+        if (!foundCategory) {
+          // select uncategorized
+          els[0].selected = true;
+        }
+        return els;
+      };
+
       return div(
         {
           class: 'transaction-dialog',
@@ -130,9 +138,9 @@ export const TransactionDialog = ({ onSave, onDelete, onNewCategory }) => {
             input({
               type: 'text',
               name: 'description',
-              value: ctx.transaction?.description ?? '',
+              value: s.transaction?.val?.description ?? '',
               oninput: function () {
-                ctx.newTransaction.description = this.value;
+                s.newTransaction.description = this.value;
               },
             }),
           ),
@@ -142,9 +150,9 @@ export const TransactionDialog = ({ onSave, onDelete, onNewCategory }) => {
               type: 'number',
               step: 0.01,
               name: 'amount',
-              value: ctx.transaction?.amount ?? '',
+              value: s.transaction?.val?.amount ?? '',
               oninput: function () {
-                ctx.newTransaction.amount = Number(this.value);
+                s.newTransaction.amount = Number(this.value);
               },
             }),
           ),
@@ -153,9 +161,9 @@ export const TransactionDialog = ({ onSave, onDelete, onNewCategory }) => {
             input({
               type: 'date',
               name: 'date',
-              value: ctx.transaction?.date ?? '',
+              value: s.transaction?.val?.date ?? '',
               oninput: function () {
-                ctx.newTransaction.date = formatDate(new Date(this.value));
+                s.newTransaction.date = formatDate(new Date(this.value));
               },
             }),
           ),
@@ -165,40 +173,44 @@ export const TransactionDialog = ({ onSave, onDelete, onNewCategory }) => {
               type: 'text',
               name: 'account',
               list: 'accounts-list',
-              value: ctx.transaction?.account ?? '',
+              value: s.transaction?.val?.account ?? '',
               oninput: function () {
                 try {
-                  ctx.newTransaction.date = formatDate(new Date(this.value));
+                  s.newTransaction.date = formatDate(new Date(this.value));
                 } catch (err) {
-                  ctx.newTransaction.data = '';
+                  s.newTransaction.date = '';
                 }
               },
             }),
           ),
-          datalist(
-            {
-              id: 'accounts-list',
-            },
-            (ctx.accounts ?? []).map((a) => option({ value: a })),
-          ),
+          () =>
+            datalist(
+              {
+                id: 'accounts-list',
+              },
+              (s.accounts.val ?? []).map((a) => option({ value: a })),
+            ),
           label(
             'Category',
             div(
               {
                 class: 'row',
               },
-              select(
-                {
-                  id: 'category-select',
-                  name: 'category',
-                  'aria-label': 'Category',
-                },
-                ...categoriesDom,
-              ),
+              () =>
+                select(
+                  {
+                    id: 'category-select',
+                    name: 'category',
+                    'aria-label': 'Category',
+                    onchange: function () {
+                      s.newTransaction.category = this.value;
+                    },
+                  },
+                  categoriesDomFn(),
+                ),
               button(
                 {
-                  onclick: () => onNewCategory && onNewCategory(),
-                  disabled: true,
+                  onclick: () => s.onNewCategory && s.onNewCategory(),
                 },
                 'New',
               ),
@@ -208,5 +220,4 @@ export const TransactionDialog = ({ onSave, onDelete, onNewCategory }) => {
       );
     },
   );
-  return transactionDialog;
 };
