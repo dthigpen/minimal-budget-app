@@ -5,6 +5,10 @@ export function formatMoney(amount = 0.0, currencySymbol = '$') {
   return currencySymbol + amount.toFixed(2);
 }
 
+export function formatDate(date) {
+  return `${d.getFullYear().padStart(4, '0')}-${(d.getMonth() + 1).padStart(2, '0')}-${d.getDate().padStart(2, '0')}`;
+}
+
 /**
  * Simple object check.
  * @param item
@@ -37,92 +41,6 @@ export function mergeDeep(target, ...sources) {
   return mergeDeep(target, ...sources);
 }
 
-function resolveFunctions(obj, ...args) {
-  // if its a function, call it
-  if (typeof obj === 'function') {
-    return obj(...args);
-    // if its an object check the key values
-  } else if (isObject(obj)) {
-    for (const key in obj) {
-      const ret = resolveFunctions(obj[key]);
-      obj[key] = ret;
-    }
-    // if its an array iterate it and update any items
-  } else if (Array.isArray(obj)) {
-    for (let i = 0; i < obj.length; i++) {
-      const ret = resolveFunctions(obj[i]);
-      obj[i] = ret;
-    }
-  }
-  return obj;
-}
-
-export function initDialog(initialConfig = null, renderFn) {
-  initialConfig ??= () => {};
-  if (isObject(initialConfig)) {
-    initialConfig = () => initialConfig;
-  }
-
-  const closed = van.state(true);
-  const close = () => {
-    closed.val = true;
-  };
-  const defaultConfig = {
-    title: '',
-    cornerClose: true,
-    buttons: [
-      {
-        text: 'Close',
-        class: 'secondary',
-        onclick: () => close(),
-      },
-    ],
-  };
-  return {
-    close,
-    open: (ctx) => {
-      // evalutate the initial config with the ctx, apply over default
-      const config = mergeDeep(defaultConfig, initialConfig(ctx));
-      const children = renderFn(ctx);
-      closed.val = false;
-      van.add(
-        document.body,
-        Modal(
-          { closed },
-          dialog(
-            { open: true },
-            article(
-              header(
-                config.cornerClose
-                  ? button({
-                      'aria-label': 'Close',
-                      rel: 'prev',
-                      onclick: () => close(),
-                    })
-                  : null,
-                p({ class: 'dialogtitle' }, config.title ?? ''),
-              ),
-              // content
-              ...(Array.isArray(children) ? children : [children]),
-              footer(
-                config?.buttons?.map((b) =>
-                  button(
-                    {
-                      onclick: b.onclick,
-                      class: b.class ?? '',
-                    },
-                    b.text,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
-    },
-  };
-}
-
 export const Table = ({ head, data, onRowClick = (r) => {} }) => {
   return table(
     head ? thead(tr(head.map((h) => th(h)))) : [],
@@ -136,3 +54,26 @@ export const Table = ({ head, data, onRowClick = (r) => {} }) => {
     ),
   );
 };
+
+export function setupValidation(
+  element,
+  { invalid, reportImmediately = true },
+) {
+  function oninput() {
+    element.setAttribute('aria-invalid', false);
+    const invalidMsg = invalid.call(element, element);
+    if (invalidMsg) {
+      element.setCustomValidity(invalidMsg);
+    }
+    if (element.checkValidity()) {
+      if (reportImmediately) {
+        element.reportValidity();
+      }
+    }
+  }
+  function oninvalid() {
+    element.setAttribute('aria-invalid', true);
+  }
+  element.oninput = oninput;
+  element.oninvalid = oninvalid;
+}

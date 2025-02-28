@@ -1,6 +1,6 @@
-import { initDialog } from './util.js';
+import { initDialogWithButtons } from './dialog-util.js';
 import van from './vender/van.debug.js';
-import { Modal, MessageBoard, Tabs, Banner } from './vender/van-ui.js';
+import { Modal } from './vender/van-ui.js';
 import * as vanX from './vender/van-x.js';
 const {
   a,
@@ -37,67 +37,99 @@ const {
   span,
 } = van.tags;
 
-export const CategoryDialog = ({ onSave, onDelete }) => {
-  const buttons = [];
-  const categoryDialog = initDialog(
-    (ctx) => {
-      const isNew = !Number.isInteger(ctx.category?.id);
-      ctx.newCategory ??= {};
-      return {
-        title: isNew ? 'New Category' : 'Edit Category',
-        buttons: [
-          {
-            text: 'Cancel',
-            class: 'secondary',
-            onclick: () => {
-              categoryDialog.close();
-            },
-          },
-          {
-            text: 'Delete',
-            class: 'contrast',
-            onclick: () => {
-              if (onDelete) {
-                onDelete(ctx.category);
-              }
-            },
-          },
-          {
-            text: isNew ? 'Create' : 'Save',
-            onclick: () => {
-              // TODO figure out how to use form variable instead of queryselector
-              const categoryForm = document.querySelector('#category-form');
-              if (!categoryForm.checkValidity()) {
-                categoryForm.reportValidity();
-                return;
-              }
-              const newCategory = {
-                ...(ctx.category ?? {}),
-                ...ctx.newCategory,
-              };
-              if (onSave) {
-                onSave(newCategory);
-              }
-              categoryDialog.close();
-            },
-          },
-        ],
-      };
-    },
-    (ctx) => {
-      ctx.newCategory ??= {};
-      const isNew = !Number.isInteger(ctx.category?.id);
+export const CategoryDialog = (states) => {
+  const defaultCategoryValues = {
+    name: '',
+    type: 'expense',
+    goal: undefined,
+  };
+  states.category ??= van.state({});
+  states.categoryNames ??= van.state([]);
+  states.isNew = van.derive(() => !Number.isInteger(states.category.val?.id));
+  states.isExpenseState = van.derive(
+    () => states.isNew.val || states.category.val?.type === 'expense',
+  );
+  states.title ??= van.derive(() =>
+    states.isNew.val ? 'New Category' : 'Edit Category',
+  );
+  states.newCategory = {};
+
+  return initDialogWithButtons(
+    states,
+    (s, dialogActions) => [
+      {
+        text: 'Cancel',
+        class: 'secondary',
+        onclick: () => {
+          dialogActions.close();
+        },
+      },
+      {
+        text: 'Delete',
+        class: () => (s.isNew.val ? '-gone' : 'contrast'),
+        onclick: () => {
+          if (s.onDelete) {
+            s.onDelete(s.category.val);
+          }
+        },
+      },
+      {
+        text: s.isNew.val ? 'Create' : 'Save',
+        onclick: () => {
+          // TODO figure out how to use form variable instead of queryselector
+          const categoryForm = document.querySelector('#category-form');
+          if (!categoryForm.checkValidity()) {
+            categoryForm.reportValidity();
+            return;
+          }
+          const newCategory = {
+            ...defaultCategoryValues,
+            ...(s.category.val ?? {}),
+            ...s.newCategory,
+          };
+          if (s.onSave) {
+            s.onSave(newCategory);
+          }
+        },
+      },
+    ],
+    (s, dialogActions) => {
+      s.newCategory ??= {};
       const incomeGoalText = 'I want to make at least';
       const expenseGoalText = 'I want to spend under';
-      const isExpenseState = isNew || ctx.category?.type === 'expense';
+      const isExpenseState =
+        states.isNew.val || states.category.val?.type === 'expense';
+      const isIncomeStateFn = () =>
+        !(s.isNew.val || s.category.val?.type === 'expense');
+      const isExpenseStateFn = () =>
+        s.isNew.val || s.category.val?.type === 'expense';
       const nameInput = input({
         type: 'text',
         placeholder: 'Groceries',
         required: true,
         name: 'category-name',
         minlength: 1,
-        value: ctx.category?.name ?? '',
-        oninput: () => (ctx.newCategory.name = nameInput.value),
+        value: s.category.val?.name ?? '',
+        oninput: function () {
+          const trimmedValue = this.value.trim();
+          s.newCategory.name = trimmedValue;
+          this.setCustomValidity('');
+          let invalidMsg = '';
+          if (!trimmedValue) {
+            invalidMsg = 'Category name must not be empty.';
+          }
+          if (
+            trimmedValue !== s.category.val?.name &&
+            s.categoryNames.val.includes(trimmedValue)
+          ) {
+            invalidMsg = `${trimmedValue} category already exists.`;
+          }
+          this.setCustomValidity(invalidMsg);
+          if (this.checkValidity()) {
+            this.reportValidity();
+          }
+          this.setAttribute('aria-invalid', !!invalidMsg);
+        },
       });
       const goalLabel = span({ id: 'category-goal-text' }, expenseGoalText);
 
@@ -106,12 +138,12 @@ export const CategoryDialog = ({ onSave, onDelete }) => {
         id: 'category-type-income',
         name: 'category-type',
         value: 'income',
-        checked: !isExpenseState,
+        checked: isIncomeStateFn,
         onchange: function (e) {
           if (this.value === 'income') {
             goalLabel.textContent = incomeGoalText;
           }
-          ctx.newCategory.type = this.value;
+          s.newCategory.type = this.value;
         },
       });
       return div(
@@ -136,12 +168,12 @@ export const CategoryDialog = ({ onSave, onDelete }) => {
               id: 'category-type-expense',
               name: 'category-type',
               value: 'expense',
-              checked: isExpenseState,
+              checked: isExpenseStateFn,
               onchange: function (e) {
                 if (this.value === 'expense') {
                   goalLabel.textContent = expenseGoalText;
                 }
-                ctx.newcategory.type = this.value;
+                s.newcategory.type = this.value;
               },
             }),
             label({ htmlFor: 'category-type-expense' }, 'Expense'),
@@ -153,9 +185,29 @@ export const CategoryDialog = ({ onSave, onDelete }) => {
               placeholder: '350.00',
               name: 'category-goal',
               min: 0,
-              value: ctx.category?.goal ?? '',
+              step: 0.01,
+              value: s.category.val?.goal ?? '',
+              oninvalid: function () {
+                this.setAttribute('aria-invalid', true);
+              },
               oninput: function () {
-                ctx.newCategory.goal = Number(this.value);
+                const trimmedValue = this.value.trim();
+                let invalidMsg = '';
+                this.setAttribute('aria-invalid', false);
+                // valid, unset goal if empty
+                if (!trimmedValue) {
+                  s.newCategory.goal = undefined;
+                } else {
+                  try {
+                    s.newCategory.goal = Number(trimmedValue);
+                  } catch (err) {
+                    invalidMsg = `Invalid goal amount.`;
+                  }
+                }
+                this.setCustomValidity(invalidMsg);
+                if (this.checkValidity()) {
+                  this.reportValidity();
+                }
               },
             }),
           ),
@@ -163,5 +215,4 @@ export const CategoryDialog = ({ onSave, onDelete }) => {
       );
     },
   );
-  return categoryDialog;
 };

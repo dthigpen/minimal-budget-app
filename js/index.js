@@ -4,7 +4,9 @@ import { MonthPicker } from './month-picker.js';
 import { CategoryDialog } from './category-dialog.js';
 import { CategoriesLists } from './categories-lists.js';
 import { TransactionsList } from './transactions-list.js';
-import { formatMoney, initDialog } from './util.js';
+import { TransactionDialog } from './transaction-dialog.js';
+import { formatMoney } from './util.js';
+import { initDialog, initDialogWithButtons } from './dialog-util.js';
 import { Modal, MessageBoard, Tabs, Banner } from './vender/van-ui.js';
 import * as vanX from './vender/van-x.js';
 const {
@@ -98,6 +100,7 @@ const DUMMY_DATA = {
       date: '2025-01-03',
       amount: 1070.29,
       account: 'Checking Account',
+      category: 'Job',
     },
   ],
 };
@@ -162,38 +165,61 @@ function saveStateToLocalStorage(stateObject) {
   localStorage.setItem(DATA_KEY, JSON.stringify(data));
 }
 
+function openDialog(closed, items, title) {
+  closed.val = false;
+  van.add(
+    document.body,
+    Modal({ closed }, div(title), () => items.val.map((v) => v + ' ')),
+  );
+}
+
 const App = () => {
   resetLocalStorage();
   let state = loadStateFromLocalStorage();
-
-  const confirmDialog = initDialog(
-    (ctx) => ({
-      title: ctx.title ?? '',
-      buttons: [
-        {
-          text: 'No',
-          onclick: () => {
-            if (ctx.onDeny) {
-              ctx.onDeny();
-            }
-            confirmDialog.close();
-          },
+  const accounts = van.derive(() => [
+    ...new Set(state.transactions.map((t) => t.account).filter((a) => a)),
+  ]);
+  const categoryNames = van.derive(() => [
+    ...new Set(state.categories.map((c) => c.name).filter((c) => c)),
+  ]);
+  const confirmDialog = initDialogWithButtons(
+    {
+      title: van.state('Confirmation'),
+      description: van.state('Are you sure you want to do this?'),
+      onDeny: () => {
+        console.log(`Clicked deny`);
+      },
+      onConfirm: () => {
+        console.log(`Clicked confirm`);
+      },
+    },
+    (s, dialogActions) => [
+      {
+        text: 'No',
+        onclick: () => {
+          if (s.onDeny) {
+            s.onDeny();
+          }
+          dialogActions.close();
         },
-        {
-          text: 'Yes',
-          onclick: () => {
-            if (ctx.onConfirm) {
-              ctx.onConfirm();
-            }
-            confirmDialog.close();
-          },
+      },
+      {
+        text: 'Yes',
+        onclick: () => {
+          if (s.onConfirm) {
+            s.onConfirm();
+          }
+          dialogActions.close();
         },
-      ],
-    }),
-
-    (ctx) => p(ctx.description ?? 'Are you sure you want to do this?'),
+      },
+    ],
+    (s, dialogActions) =>
+      p(s.description ?? 'Are you sure you want to do this?'),
   );
+
   const categoryDialog = CategoryDialog({
+    category: null,
+    categoryNames: categoryNames,
     onSave: (c) => {
       console.log(`Saving category: ${JSON.stringify(c)}`);
       // alert(`Saving category: ${JSON.stringify(c)}`);
@@ -202,22 +228,52 @@ const App = () => {
       } else {
         addValue(state.categories, c);
       }
+      categoryDialog.close();
     },
     onDelete: (c) => {
-      confirmDialog.open({
-        title: 'Delete category',
-        description: `Are you sure you want to delete ${c.name}?`,
-        onDeny: () => {
-          console.debug('Category not deleted');
-        },
-        onConfirm: () => {
-          categoryDialog.close();
-          deleteValue(state.categories, c.id);
-        },
-      });
+      confirmDialog.states.title.val = 'Delete category';
+      confirmDialog.states.description.val = `Are you sure you want to delete ${c.name}?`;
+      confirmDialog.states.onDeny = () => {
+        console.debug('Category not deleted');
+      };
+      confirmDialog.states.onConfirm = () => {
+        categoryDialog.close();
+        deleteValue(state.categories, c.id);
+      };
+      confirmDialog.open();
     },
   });
 
+  const transactionDialog = TransactionDialog({
+    accounts: accounts,
+    categories: categoryNames,
+    onSave: (t) => {
+      console.log(`Saving transaction: ${JSON.stringify(t)}`);
+      // alert(`Saving transaction: ${JSON.stringify(c)}`);
+      if (Number.isInteger(t.id)) {
+        updateValue(state.transactions, t);
+      } else {
+        addValue(state.transactions, t);
+      }
+      transactionDialog.close();
+    },
+    onDelete: (t) => {
+      confirmDialog.open({
+        title: 'Delete transaction',
+        description: `Are you sure you want to delete ${t.description}?`,
+        onDeny: () => {
+          console.debug('Transaction not deleted');
+        },
+        onConfirm: () => {
+          transactionDialog.close();
+          deleteValue(state.transactions, t.id);
+        },
+      });
+    },
+    onNewCategory: () => {
+      categoryDialog.open({ category: {} });
+    },
+  });
   van.derive(() => {
     console.debug(`Categories updated: ${JSON.stringify(state.categories)}`);
     saveStateToLocalStorage(state);
@@ -229,6 +285,50 @@ const App = () => {
     'aria-label': 'Month',
     oninput: () => (selectedMonthString.val = this.value),
   });
+
+  const fooClosed = van.state(true);
+  const fooTitle = van.state('Items:');
+  const fooItems = van.state([111, 222, 333, 444, 555]);
+  const fooDesc = van.derive(() => `Numbers: ${fooItems.val.join(', ')}`);
+  /*
+  const fooDialog = initDialog3(
+    {
+      title: fooTitle,
+      description: fooDesc,
+    },
+    (s, {close}) => {
+      return div(
+      	h3(s.title),
+      	p(s.description),
+      	button({onclick: () => close()}, 'Close')
+      )
+    },
+  );
+  */
+  const fooDialog = initDialogWithButtons(
+    {
+      title: fooTitle,
+      cornerClose: van.state(true),
+      description: fooDesc,
+    },
+    (s, { close }) => [
+      {
+        text: 'Close',
+      },
+      {
+        text: 'Save',
+        onclick: () => {
+          console.log(`Save clicked`);
+          close();
+        },
+        class: 'secondary',
+      },
+    ],
+    (s, { close }) => {
+      return div(p(s.description));
+    },
+  );
+
   return div(
     header(Nav()),
     main(
@@ -240,15 +340,25 @@ const App = () => {
             categoryDialog.open({
               category: JSON.parse(JSON.stringify(c)),
             });
+            console.log(categoryDialog.states.category.val);
           },
           onClickViewAll: () => console.debug(`View All clicked`),
           onClickNew: () => {
             console.log('New Category clicked');
-            categoryDialog.open({});
+            categoryDialog.open({ category: {} });
           },
         }),
 
-      () => TransactionsList({ state }),
+      () =>
+        TransactionsList({
+          state,
+          onClickRow: (t) => {
+            console.log(`Clicked: ${JSON.stringify(t)}`);
+            transactionDialog.open({
+              transaction: JSON.parse(JSON.stringify(t)),
+            });
+          },
+        }),
     ),
   );
 };
