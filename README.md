@@ -13,7 +13,7 @@ A minimal web based budgeting application. A project to explore a simple develop
    			- [x] prevent same name category
 - Transactions
     - [x] Create, read, delete, update
-    - [ ] Category assignment
+    - Category assignment
     	- [x] Manually from transaction dialog
     	- [ ] Automatic from transaction confirm
    	- [ ] Reccurring (e.g. Every 2 weeks, every month, etc)
