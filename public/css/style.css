@@ -126,6 +126,12 @@ main.container {
   flex-direction: column;
   align-items: center;
 }
+
+.transactionsempty {
+  display: grid;
+  place-content: center;
+  min-height: 10rem;
+}
 .transaction-row {
   display: flex;
   flex-direction: column;

@@ -5,7 +5,7 @@ import { CategoryDialog } from './category-dialog.js';
 import { CategoriesLists } from './categories-lists.js';
 import { TransactionsList } from './transactions-list.js';
 import { TransactionDialog } from './transaction-dialog.js';
-import { formatMoney } from './util.js';
+import { formatMoney, formatDate } from './util.js';
 import { initDialog, initDialogWithButtons } from './dialog-util.js';
 import { Modal, MessageBoard, Tabs, Banner } from './vender/van-ui.js';
 import * as vanX from './vender/van-x.js';
@@ -175,13 +175,26 @@ function openDialog(closed, items, title) {
 
 const App = () => {
   resetLocalStorage();
-  let state = loadStateFromLocalStorage();
+  const state = loadStateFromLocalStorage();
+  const selectedDate = van.state(new Date());
+
   const accounts = van.derive(() => [
     ...new Set(state.transactions.map((t) => t.account).filter((a) => a)),
   ]);
   const categoryNames = van.derive(() => [
     ...new Set(state.categories.map((c) => c.name).filter((c) => c)),
   ]);
+  const monthTransactions = van.derive(() => {
+    if (!selectedDate.val) {
+      return [];
+    }
+    const yearMonthStr = formatDate(selectedDate.val).slice(0, -3);
+    return state.transactions.filter((t) => t.date.startsWith(yearMonthStr));
+  });
+  van.derive(() => {
+    console.log(`year month: ${formatDate(selectedDate.val).slice(0, -3)}`);
+    console.log(`month transactions: ${JSON.stringify(monthTransactions.val)}`);
+  });
   const confirmDialog = initDialogWithButtons(
     {
       title: van.state('Confirmation'),
@@ -279,60 +292,10 @@ const App = () => {
     saveStateToLocalStorage(state);
   });
 
-  const selectedMonthString = van.state('');
-  const monthPickerInput = input({
-    type: 'month',
-    'aria-label': 'Month',
-    oninput: () => (selectedMonthString.val = this.value),
-  });
-
-  const fooClosed = van.state(true);
-  const fooTitle = van.state('Items:');
-  const fooItems = van.state([111, 222, 333, 444, 555]);
-  const fooDesc = van.derive(() => `Numbers: ${fooItems.val.join(', ')}`);
-  /*
-  const fooDialog = initDialog3(
-    {
-      title: fooTitle,
-      description: fooDesc,
-    },
-    (s, {close}) => {
-      return div(
-      	h3(s.title),
-      	p(s.description),
-      	button({onclick: () => close()}, 'Close')
-      )
-    },
-  );
-  */
-  const fooDialog = initDialogWithButtons(
-    {
-      title: fooTitle,
-      cornerClose: van.state(true),
-      description: fooDesc,
-    },
-    (s, { close }) => [
-      {
-        text: 'Close',
-      },
-      {
-        text: 'Save',
-        onclick: () => {
-          console.log(`Save clicked`);
-          close();
-        },
-        class: 'secondary',
-      },
-    ],
-    (s, { close }) => {
-      return div(p(s.description));
-    },
-  );
-
   return div(
     header(Nav()),
     main(
-      MonthPicker(),
+      MonthPicker({ date: selectedDate, onChange: (d) => console.log(d) }),
       () =>
         CategoriesLists({
           state,
@@ -351,7 +314,7 @@ const App = () => {
 
       () =>
         TransactionsList({
-          state,
+          monthTransactions,
           onClickRow: (t) => {
             console.log(`Clicked: ${JSON.stringify(t)}`);
             transactionDialog.open({
