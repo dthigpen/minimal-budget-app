@@ -1,5 +1,6 @@
 // import van from './vender/van.js';
 import van from './vender/van.debug.js';
+import { generateCategories, generateTransactions } from './test-data.js';
 import { MonthPicker } from './month-picker.js';
 import { CategoryDialog } from './category-dialog.js';
 import { CategoriesLists } from './categories-lists.js';
@@ -63,46 +64,8 @@ const DEFAULT_DATA = {
   transactions: [],
 };
 const DUMMY_DATA = {
-  categories: [
-    {
-      name: 'Groceries',
-      type: 'expense',
-      goal: 350.0,
-    },
-    {
-      name: 'Job',
-      type: 'income',
-      goal: 1500,
-    },
-    {
-      name: 'Entertainment',
-      type: 'expense',
-      goal: 12.5,
-    },
-    {
-      name: 'No Goal Expense',
-      type: 'expense',
-    },
-    {
-      name: 'No Goal Income',
-      type: 'income',
-    },
-  ],
-  transactions: [
-    {
-      description: 'WALMART #123',
-      date: '2025-01-09',
-      amount: -123.45,
-      account: 'Some Credit Card',
-    },
-    {
-      description: 'COMPANY XYZ',
-      date: '2025-01-03',
-      amount: 1070.29,
-      account: 'Checking Account',
-      category: 'Job',
-    },
-  ],
+  categories: generateCategories(),
+  transactions: generateTransactions(),
 };
 function resetLocalStorage() {
   // TODO change to DEFAULT_DATA
@@ -190,10 +153,6 @@ const App = () => {
     }
     const yearMonthStr = formatDate(selectedDate.val).slice(0, -3);
     return state.transactions.filter((t) => t.date.startsWith(yearMonthStr));
-  });
-  van.derive(() => {
-    console.log(`year month: ${formatDate(selectedDate.val).slice(0, -3)}`);
-    console.log(`month transactions: ${JSON.stringify(monthTransactions.val)}`);
   });
   const confirmDialog = initDialogWithButtons(
     {
