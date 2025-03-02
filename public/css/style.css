@@ -105,11 +105,16 @@ main.container {
 .month-picker {
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: stretch;
   gap: 1rem;
+  padding-bottom: 1rem;
 
-  > * {
+  > select {
     max-width: 10rem;
+    margin-bottom: 0;
+  }
+  > button {
+    flex-shrink: 0;
   }
 }
 .dialogtitle {

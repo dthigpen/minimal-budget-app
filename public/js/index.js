@@ -128,70 +128,71 @@ function saveStateToLocalStorage(stateObject) {
   localStorage.setItem(DATA_KEY, JSON.stringify(data));
 }
 
+
 function openDialog(closed, items, title) {
-  closed.val = false;
-  van.add(
-    document.body,
-    Modal({ closed }, div(title), () => items.val.map((v) => v + ' ')),
-  );
+	closed.val = false
+	van.add(document.body, Modal(
+		{closed},
+		div(title),
+		() => items.val.map(v => v + ' '),
+	))
 }
 
 const App = () => {
   resetLocalStorage();
   const state = loadStateFromLocalStorage();
-  const selectedDate = van.state(new Date());
-
-  const accounts = van.derive(() => [
-    ...new Set(state.transactions.map((t) => t.account).filter((a) => a)),
-  ]);
-  const categoryNames = van.derive(() => [
-    ...new Set(state.categories.map((c) => c.name).filter((c) => c)),
-  ]);
+  const selectedDate = van.state(new Date())
+  
+   const accounts = van.derive(() => [
+      ...new Set(state.transactions.map((t) => t.account).filter((a) => a)),
+    ]);
+    const categoryNames = van.derive(() => [
+      ...new Set(state.categories.map((c) => c.name).filter((c) => c)),
+    ]);
   const monthTransactions = van.derive(() => {
-    if (!selectedDate.val) {
-      return [];
-    }
-    const yearMonthStr = formatDate(selectedDate.val).slice(0, -3);
-    return state.transactions.filter((t) => t.date.startsWith(yearMonthStr));
-  });
+  	if(!selectedDate.val) {
+  		return []
+  	}
+  	const yearMonthStr = formatDate(selectedDate.val).slice(0, -3);
+  	return state.transactions.filter(t => t.date.startsWith(yearMonthStr))
+  })
   const confirmDialog = initDialogWithButtons(
-    {
-      title: van.state('Confirmation'),
-      description: van.state('Are you sure you want to do this?'),
-      onDeny: () => {
-        console.log(`Clicked deny`);
-      },
-      onConfirm: () => {
-        console.log(`Clicked confirm`);
-      },
-    },
-    (s, dialogActions) => [
-      {
-        text: 'No',
-        onclick: () => {
-          if (s.onDeny) {
-            s.onDeny();
-          }
-          dialogActions.close();
-        },
-      },
-      {
-        text: 'Yes',
-        onclick: () => {
-          if (s.onConfirm) {
-            s.onConfirm();
-          }
-          dialogActions.close();
-        },
-      },
-    ],
-    (s, dialogActions) =>
-      p(s.description ?? 'Are you sure you want to do this?'),
+  {
+  	title: van.state('Confirmation'),
+  	description: van.state('Are you sure you want to do this?'),
+  	onDeny: () => {
+  		console.log(`Clicked deny`)
+  	},
+  	onConfirm: () => {
+  		console.log(`Clicked confirm`)
+  	},
+  	},
+  	(s, dialogActions) => [
+  		{
+  			text: 'No',
+  			onclick: () => {
+  				if(s.onDeny) {
+  					s.onDeny()
+  				}
+  				dialogActions.close()
+  			}
+  		},
+  		{
+  			text:'Yes',
+  			onclick: () => {
+  			if(s.onConfirm) {
+ 					s.onConfirm()
+ 				}
+ 				dialogActions.close()
+  			}
+  		}
+  	],
+  (s, dialogActions) => p(s.description ?? 'Are you sure you want to do this?'),
   );
-
+  
   const categoryDialog = CategoryDialog({
-    category: null,
-    categoryNames: categoryNames,
+ 		category: null,
+ 		categoryNames: categoryNames,
     onSave: (c) => {
       console.log(`Saving category: ${JSON.stringify(c)}`);
       // alert(`Saving category: ${JSON.stringify(c)}`);
@@ -203,22 +204,24 @@ const App = () => {
       categoryDialog.close();
     },
     onDelete: (c) => {
-      confirmDialog.states.title.val = 'Delete category';
-      confirmDialog.states.description.val = `Are you sure you want to delete ${c.name}?`;
-      confirmDialog.states.onDeny = () => {
-        console.debug('Category not deleted');
-      };
-      confirmDialog.states.onConfirm = () => {
-        categoryDialog.close();
-        deleteValue(state.categories, c.id);
-      };
-      confirmDialog.open();
+    	confirmDialog.states.title.val = 'Delete category'
+    	confirmDialog.states.description.val = `Are you sure you want to delete ${c.name}?`
+    	confirmDialog.states.onDeny = () => {
+    	          console.debug('Category not deleted');
+    	        };
+    	confirmDialog.states.onConfirm = () => {
+    	          categoryDialog.close();
+    	          deleteValue(state.categories, c.id);
+    	        };
+       confirmDialog.open();
     },
   });
+ 
 
+  
   const transactionDialog = TransactionDialog({
-    accounts: accounts,
-    categories: categoryNames,
+  	accounts: accounts,
+  	categories: categoryNames,
     onSave: (t) => {
       console.log(`Saving transaction: ${JSON.stringify(t)}`);
       // alert(`Saving transaction: ${JSON.stringify(c)}`);
@@ -243,7 +246,7 @@ const App = () => {
       });
     },
     onNewCategory: () => {
-      categoryDialog.open({ category: {} });
+      categoryDialog.open({category: {}});
     },
   });
   van.derive(() => {
@@ -254,7 +257,7 @@ const App = () => {
   return div(
     header(Nav()),
     main(
-      MonthPicker({ date: selectedDate, onChange: (d) => console.log(d) }),
+      () => MonthPicker({date: selectedDate, onChange: (d) => console.log(d)}),
       () =>
         CategoriesLists({
           state,
@@ -262,12 +265,12 @@ const App = () => {
             categoryDialog.open({
               category: JSON.parse(JSON.stringify(c)),
             });
-            console.log(categoryDialog.states.category.val);
+            console.log(categoryDialog.states.category.val)
           },
           onClickViewAll: () => console.debug(`View All clicked`),
           onClickNew: () => {
             console.log('New Category clicked');
-            categoryDialog.open({ category: {} });
+            categoryDialog.open({category: {}});
           },
         }),
 

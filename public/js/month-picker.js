@@ -1,6 +1,6 @@
 // import van from './vender/van.js';
 import van from './vender/van.debug.js';
-const { div, select, option } = van.tags;
+const { div, select, option, button } = van.tags;
 
 const MONTHS = [
   'January',
@@ -28,11 +28,12 @@ export const MonthPicker = ({ date, onChange } = {}) => {
   const futureYears = 5;
   const numYears = currYear + futureYears - startYear;
   const years = Array.from(new Array(numYears)).map((_, i) => startYear + i);
+  years.reverse();
   const monthDoms = MONTHS.map((m, i) => option({ value: i }, m));
   // select the given year and month
   monthDoms.at(currMonth).selected = true;
   const yearDoms = years.map((y) => option({ value: y }, y));
-  yearDoms.at(-futureYears).selected = true;
+  yearDoms.at(futureYears - 1).selected = true;
 
   return div(
     { class: 'month-picker' },
@@ -57,6 +58,15 @@ export const MonthPicker = ({ date, onChange } = {}) => {
         },
       },
       yearDoms,
+    ),
+    button(
+      {
+        class: 'small-button',
+        onclick: () => {
+          date.val = new Date();
+        },
+      },
+      'This Month',
     ),
   );
 };
