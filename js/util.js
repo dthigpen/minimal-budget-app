@@ -5,8 +5,8 @@ export function formatMoney(amount = 0.0, currencySymbol = '$') {
   return currencySymbol + amount.toFixed(2);
 }
 
-export function formatDate(date) {
-  return `${d.getFullYear().padStart(4, '0')}-${(d.getMonth() + 1).padStart(2, '0')}-${d.getDate().padStart(2, '0')}`;
+export function formatDate(d) {
+  return `${String(d.getFullYear()).padStart(4, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 /**

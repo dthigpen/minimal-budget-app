@@ -47,14 +47,8 @@ export function initDialog(states, renderFn) {
     states.closed.val = true;
   }
   function open(updateValues = {}) {
-    console.log(
-      `Attemting to updates states: ${JSON.stringify(states)} with values: ${JSON.stringify(updateValues)}`,
-    );
     for (const [key, newValue] of Object.entries(updateValues)) {
       if (Object.keys(states).includes(key)) {
-        console.log(
-          `Updating states.${key} from ${JSON.stringify(states[key].val)} to ${JSON.stringify(newValue)}`,
-        );
         states[key].val = newValue;
       }
     }

@@ -59,8 +59,8 @@ const TransactionRow = ({ transaction, onClick }) => {
     ),
   );
 };
-export const TransactionsList = ({ state, onClickRow }) => {
-  console.debug(`TransactionList ${state.transactions.length} transactions`);
+export const TransactionsList = ({ monthTransactions, onClickRow }) => {
+  console.debug(`TransactionList ${monthTransactions.val.length} transactions`);
   return div(
     {
       class: 'transactions-list',
@@ -99,14 +99,21 @@ export const TransactionsList = ({ state, onClickRow }) => {
         ),
       ),
     ),
-    div(
-      {
-        class: 'transactionsholder',
-      },
+    monthTransactions.val.length > 0
+      ? div(
+          {
+            class: 'transactionsholder',
+          },
 
-      ...state.transactions.map((t) =>
-        TransactionRow({ transaction: t, onClick: onClickRow }),
-      ),
-    ),
+          ...monthTransactions.val.map((t) =>
+            TransactionRow({ transaction: t, onClick: onClickRow }),
+          ),
+        )
+      : div(
+          {
+            class: 'transactionsempty',
+          },
+          span('No transactions for this month!'),
+        ),
   );
 };
