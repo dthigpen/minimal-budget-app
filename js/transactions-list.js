@@ -59,7 +59,11 @@ const TransactionRow = ({ transaction, onClick }) => {
     ),
   );
 };
-export const TransactionsList = ({ monthTransactions, onClickRow }) => {
+export const TransactionsList = ({
+  monthTransactions,
+  onClickRow,
+  onClickNew,
+}) => {
   console.debug(`TransactionList ${monthTransactions.val.length} transactions`);
   return div(
     {
@@ -93,6 +97,7 @@ export const TransactionsList = ({ monthTransactions, onClickRow }) => {
             class: 'small-button',
             onclick: () => {
               console.debug('new transaction clicked');
+              onClickNew && onClickNew();
             },
           },
           'New',

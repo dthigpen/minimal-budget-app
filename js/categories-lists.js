@@ -102,8 +102,6 @@ export const CategoriesLists = ({
 
 const CategoryRow = (category, { onClick, total = 0.0 }) => {
   const categoryVal = category;
-  console.log(`CategoryRow: ${JSON.stringify(categoryVal)}`);
-
   const hasGoal = categoryVal.goal !== undefined && categoryVal.goal !== null;
   const isExpense = categoryVal.type === 'expense';
   const okayThreshold = 0.8;
