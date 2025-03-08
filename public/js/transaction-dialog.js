@@ -51,6 +51,9 @@ export const TransactionDialog = (states) => {
   states.isNew = van.derive(
     () => !Number.isInteger(states.transaction.val?.id),
   );
+  states.title ??= van.derive(() =>
+      states.isNew.val ? 'New Transaction' : 'Edit Transaction',
+    );
   states.newTransaction = {};
 
   return initDialogWithButtons(
