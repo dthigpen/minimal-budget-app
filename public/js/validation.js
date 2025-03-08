@@ -70,7 +70,6 @@ export function addValidation(element, options) {
     if (oldOninput) {
       oldOninput(e);
     }
-    console.log('oninput');
     validate();
   }
   function oninvalid() {

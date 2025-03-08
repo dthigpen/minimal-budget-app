@@ -52,8 +52,8 @@ export const TransactionDialog = (states) => {
     () => !Number.isInteger(states.transaction.val?.id),
   );
   states.title ??= van.derive(() =>
-      states.isNew.val ? 'New Transaction' : 'Edit Transaction',
-    );
+    states.isNew.val ? 'New Transaction' : 'Edit Transaction',
+  );
   states.newTransaction = {};
 
   return initDialogWithButtons(
@@ -95,7 +95,6 @@ export const TransactionDialog = (states) => {
       },
     ],
     (s, dialogActions) => {
-      console.log(`isNew: ${s.isNew.val}`);
       s.newTransaction = {};
       const categoryNames = van.derive(() => [
         'Uncategorized',
@@ -174,11 +173,7 @@ export const TransactionDialog = (states) => {
           list: 'accounts-list',
           value: s.transaction?.val?.account ?? '',
           oninput: function () {
-            try {
-              s.newTransaction.date = formatDate(new Date(this.value));
-            } catch (err) {
-              s.newTransaction.date = '';
-            }
+            s.newTransaction.account = this.value;
           },
         }),
         {
