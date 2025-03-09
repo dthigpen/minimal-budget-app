@@ -51,7 +51,9 @@ const {
   progress,
 } = van.tags;
 
-const DATA_KEY = 'minimal-budget-app';
+const DATA_KEY_NAME = 'minimal-budget-app-key';
+const DEMO_DATA_KEY = 'minimal-budget-app-demo-data';
+const USER_DATA_KEY = 'minimal-budget-app-data';
 
 const Nav = () =>
   nav(
@@ -63,13 +65,11 @@ const DEFAULT_DATA = {
   categories: [],
   transactions: [],
 };
-const DUMMY_DATA = {
-  categories: generateCategories(),
-  transactions: generateTransactions(),
-};
+
 function resetLocalStorage() {
-  // TODO change to DEFAULT_DATA
-  localStorage.setItem(DATA_KEY, JSON.stringify(DUMMY_DATA));
+  localStorage.removeItem(DATA_KEY_NAME);
+  localStorage.removeItem(DEMO_DATA_KEY);
+  localStorage.removeItem(USER_DATA_KEY);
 }
 
 function addValue(arr, value) {
@@ -109,17 +109,55 @@ function updateValue(arr, value) {
   }
   throw Error(`Value with id ${value.id} was not found`);
 }
+
+function getDataKey() {
+  // first check which key to look at, either demo or real data
+  // if does not exist, start in demo mode, so use demo key
+  const dataKey = localStorage.getItem(DATA_KEY_NAME);
+  if (!dataKey) {
+    localStorage.setItem(DATA_KEY_NAME, DEMO_DATA_KEY);
+    return DEMO_DATA_KEY;
+  }
+  return dataKey;
+}
+
+function isDemoMode() {
+  return getDataKey() === DEMO_DATA_KEY;
+}
+
+function setDemoMode(enabled) {
+  const dataKey = enabled ? DEMO_DATA_KEY : USER_DATA_KEY;
+  localStorage.setItem(DATA_KEY_NAME, dataKey);
+}
 function loadStateFromLocalStorage() {
-  const data = JSON.parse(
-    localStorage.getItem(DATA_KEY) ?? JSON.stringify(DEFAULT_DATA),
-  );
+  const dataKey = getDataKey();
+  let dataString = localStorage.getItem(dataKey);
+  if (!dataString) {
+    // in demo mode, use generated data
+    if (isDemoMode()) {
+      dataString = JSON.stringify({
+        categories: generateCategories(),
+        transactions: generateTransactions(),
+      });
+    } else {
+      // default empty data
+      dataString = JSON.stringify({
+        categories: [],
+        transactions: [],
+      });
+    }
+    // immediately store so that it doesn't need to be recalculated again
+    localStorage.setItem(dataKey, dataString);
+  }
+  // decode
+  const data = JSON.parse(dataString);
 
   // add ids categories and transactions
   data.categories.forEach((c, i) => (c.id = i));
   data.transactions.forEach((t, i) => (t.id = i));
 
   console.debug(`loaded local storage data: ${JSON.stringify(data)}`);
-  return vanX.reactive(data);
+  return data;
 }
 function saveStateToLocalStorage(stateObject) {
   const data = JSON.parse(JSON.stringify(vanX.compact(stateObject)));
@@ -127,7 +165,8 @@ function saveStateToLocalStorage(stateObject) {
   data.categories.forEach((c) => delete c.id);
   data.transactions.forEach((t) => delete t.id);
 
-  localStorage.setItem(DATA_KEY, JSON.stringify(data));
+  const dataKey = getDataKey();
+  localStorage.setItem(dataKey, JSON.stringify(data));
 }
 
 function openDialog(closed, items, title) {
@@ -139,8 +178,14 @@ function openDialog(closed, items, title) {
 }
 
 const App = () => {
-  resetLocalStorage();
-  const state = loadStateFromLocalStorage();
+  // resetLocalStorage();
+  const state = vanX.reactive(loadStateFromLocalStorage());
+  const inDemo = van.state(isDemoMode());
+  van.derive(() => {
+    // persists value to local storage
+    setDemoMode(inDemo.val);
+    vanX.replace(state, loadStateFromLocalStorage());
+  });
   const selectedDate = van.state(new Date());
 
   const accounts = van.derive(() => [
@@ -156,6 +201,7 @@ const App = () => {
     const yearMonthStr = formatDate(selectedDate.val).slice(0, -3);
     return state.transactions.filter((t) => t.date.startsWith(yearMonthStr));
   });
+
   const confirmDialog = initDialogWithButtons(
     {
       title: van.state('Confirmation'),
@@ -252,12 +298,47 @@ const App = () => {
     console.debug(`Categories updated: ${JSON.stringify(state.categories)}`);
     saveStateToLocalStorage(state);
   });
-
   return div(
     header(Nav()),
     main(
       () =>
-        MonthPicker({ date: selectedDate, onChange: (d) => console.debug(d) }),
+        inDemo.val
+          ? Banner(
+              { bannerClass: 'banner', sticky: true, backgroundColor: null },
+              div(
+                {
+                  class: 'row',
+                },
+                '👋 You are looking at demo data. Exit the demo to get started for yourself!',
+                button(
+                  {
+                    onclick: () => {
+                      confirmDialog.states.onDeny = () => {
+                        console.debug('Remaining in demo mode');
+                      };
+                      confirmDialog.states.onConfirm = () => {
+                        inDemo.val = false;
+                        console.debug('Exiting demo mode');
+                      };
+                      confirmDialog.open({
+                        title: 'Exit Demo Mode',
+                        description: `Are you sure you want to exit demo mode? You can get back by clearing your browser cache.`,
+                      });
+                    },
+                  },
+                  'Exit Demo',
+                ),
+              ),
+            )
+          : null,
+      () =>
+        MonthPicker({
+          date: selectedDate,
+          onChange: (d) => {
+            console.debug(d);
+            example2();
+          },
+        }),
       () =>
         CategoriesLists({
           state,
