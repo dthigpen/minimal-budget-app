@@ -25,6 +25,7 @@
     "@picocss/pico": "^2.0.6",
     "vanjs-core": "^1.5.3",
     "vanjs-ext": "^0.6.2",
+    "vanjs-router": "^2.1.0",
     "vanjs-ui": "^0.11.7"
   }
 }

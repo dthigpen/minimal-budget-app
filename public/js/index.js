@@ -10,6 +10,7 @@ import { TransactionDialog } from './transaction-dialog.js';
 import { formatMoney, formatDate } from './util.js';
 import { initDialog, initDialogWithButtons } from './dialog-util.js';
 import { Modal, MessageBoard, Tabs, Banner } from './vender/van-ui.js';
+import { Route, goto } from './vender/router.js';
 const {
   a,
   select,
@@ -57,7 +58,8 @@ const USER_DATA_KEY = 'minimal-budget-app-data';
 
 const Nav = () =>
   nav(
-    ul(li(strong('Minimal Budget'))),
+    { class: 'nav-bar' },
+    ul(li(a({ href: '#', class: 'title' }, 'Minimal Budget'))),
     ul(li(a({ href: '#/settings' }, 'Settings'))),
   );
 
@@ -300,76 +302,109 @@ const App = () => {
   });
   return div(
     header(Nav()),
-    main(
-      () =>
-        inDemo.val
-          ? Banner(
-              { bannerClass: 'banner', sticky: true, backgroundColor: null },
-              div(
-                {
-                  class: 'row',
-                },
-                '👋 You are looking at demo data. Exit the demo to get started for yourself!',
-                button(
-                  {
-                    onclick: () => {
-                      confirmDialog.states.onDeny = () => {
-                        console.debug('Remaining in demo mode');
-                      };
-                      confirmDialog.states.onConfirm = () => {
-                        inDemo.val = false;
-                        console.debug('Exiting demo mode');
-                      };
-                      confirmDialog.open({
-                        title: 'Exit Demo Mode',
-                        description: `Are you sure you want to exit demo mode? You can get back by clearing your browser cache.`,
-                      });
+    () =>
+      Route({
+        rule: 'home',
+        Loader() {
+          return main(
+            () =>
+              inDemo.val
+                ? Banner(
+                    {
+                      bannerClass: 'banner',
+                      sticky: true,
+                      backgroundColor: null,
                     },
-                  },
-                  'Exit Demo',
-                ),
-              ),
-            )
-          : null,
-      () =>
-        MonthPicker({
-          date: selectedDate,
-          onChange: (d) => {
-            console.debug(d);
-            example2();
-          },
-        }),
-      () =>
-        CategoriesLists({
-          state,
-          onClickCategory: (c, i) => {
-            categoryDialog.open({
-              category: JSON.parse(JSON.stringify(c)),
-            });
-            console.debug(categoryDialog.states.category.val);
-          },
-          onClickViewAll: () => console.debug(`View All clicked`),
-          onClickNew: () => {
-            console.debug('New Category clicked');
-            categoryDialog.open({ category: {} });
-          },
-        }),
+                    div(
+                      {
+                        class: 'row',
+                      },
+                      '👋 You are looking at demo data. Exit the demo to get started for yourself!',
+                      button(
+                        {
+                          onclick: () => {
+                            confirmDialog.states.onDeny = () => {
+                              console.debug('Remaining in demo mode');
+                            };
+                            confirmDialog.states.onConfirm = () => {
+                              inDemo.val = false;
+                              console.debug('Exiting demo mode');
+                            };
+                            confirmDialog.open({
+                              title: 'Exit Demo Mode',
+                              description: `Are you sure you want to exit demo mode? You can get back by clearing your browser cache.`,
+                            });
+                          },
+                        },
+                        'Exit Demo',
+                      ),
+                    ),
+                  )
+                : null,
+            () =>
+              MonthPicker({
+                date: selectedDate,
+                onChange: (d) => {
+                  console.debug(d);
+                  example2();
+                },
+              }),
+            () =>
+              CategoriesLists({
+                state,
+                onClickCategory: (c, i) => {
+                  categoryDialog.open({
+                    category: JSON.parse(JSON.stringify(c)),
+                  });
+                  console.debug(categoryDialog.states.category.val);
+                },
+                onClickViewAll: () => console.debug(`View All clicked`),
+                onClickNew: () => {
+                  console.debug('New Category clicked');
+                  categoryDialog.open({ category: {} });
+                },
+              }),
 
-      () =>
-        TransactionsList({
-          monthTransactions,
-          onClickRow: (t) => {
-            console.debug(`Clicked: ${JSON.stringify(t)}`);
-            transactionDialog.open({
-              transaction: JSON.parse(JSON.stringify(t)),
-            });
-          },
-          onClickNew: () => {
-            transactionDialog.open({ transaction: {} });
-          },
-        }),
-    ),
+            () =>
+              TransactionsList({
+                monthTransactions,
+                onClickRow: (t) => {
+                  console.debug(`Clicked: ${JSON.stringify(t)}`);
+                  transactionDialog.open({
+                    transaction: JSON.parse(JSON.stringify(t)),
+                  });
+                },
+                onClickNew: () => {
+                  transactionDialog.open({ transaction: {} });
+                },
+              }),
+          );
+        },
+      }),
+    () => Settings({ inDemo }),
   );
 };
 
+const Settings = ({ inDemo }) =>
+  Route({
+    rule: 'settings',
+    // delayed: true,
+    Loader() {
+      return div(
+        h2('Settings'),
+        h3('Demo Mode'),
+        p(
+          'Demo mode uses fake categories and transactions to show what that app looks like with data. Switching to demo mode will not remove your data, you can always switch back.',
+        ),
+        button(
+          { onclick: () => (inDemo.val = !inDemo.val) },
+          inDemo.val ? 'Turn Off' : 'Turn On',
+        ),
+      );
+    },
+    async onLoad() {
+      console.log('onLoad');
+      // this.show();
+    },
+  });
 van.add(document.body, App());

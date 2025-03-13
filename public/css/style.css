@@ -15,6 +15,17 @@
   }
 }
 
+.nav-bar {
+  a.title {
+    text-decoration: none;
+    color: inherit;
+    outline: 0;
+    cursor: auto;
+    font-size: 1rem;
+    font-weight: bold;
+  }
+}
+
 .category-row {
   display: flex;
   flex-direction: column;

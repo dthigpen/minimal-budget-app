@@ -24,6 +24,9 @@ cp node_modules/vanjs-core/src/{van,van.debug}.js public/js/vender/
 cp node_modules/vanjs-ui/dist/van-ui.js public/js/vender/
 sed -i 's/vanjs-core/.\/van.js/g' public/js/vender/van-ui.js
 
+cp node_modules/vanjs-router/js/router.js public/js/vender/
+sed -i 's/vanjs-core/.\/van.js/g' public/js/vender/router.js
+
 cp node_modules/vanjs-ext/src/van-x.js public/js/vender/
 sed -i 's/vanjs-core/.\/van.js/g' public/js/vender/van-x.js
 
