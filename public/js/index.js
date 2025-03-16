@@ -351,7 +351,10 @@ const App = () => {
               }),
             () =>
               CategoriesLists({
-                state,
+                states: {
+                  categories: state.categories,
+                  transactions: monthTransactions,
+                },
                 onClickCategory: (c, i) => {
                   categoryDialog.open({
                     category: JSON.parse(JSON.stringify(c)),
@@ -407,4 +410,6 @@ const Settings = ({ inDemo }) =>
       // this.show();
     },
   });
-van.add(document.body, App());
+setTimeout(() => {
+	van.add(document.body, App());
+}, 8000)

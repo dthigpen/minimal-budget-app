@@ -42,11 +42,29 @@ const {
 } = van.tags;
 
 export const CategoriesLists = ({
-  state,
+  states,
   onClickNew,
   onClickViewAll,
   onClickCategory,
 }) => {
+  const transactionsByCategoryName = Object.groupBy(
+    states.transactions.val,
+    (t) => t.category,
+  );
+  const categoryTransactionsTotals = Object.entries(
+    transactionsByCategoryName,
+  ).map(([catName, ts]) => {
+  	const total = ts.map(t => t.amount).reduce((acc, v) => acc+ v, 0)
+    return [states.categories.find((c) => c.name === catName), ts, total];
+  });
+  const badCategoryTransactionTotals = categoryTransactionsTotals.filter(([c]) => !c)
+  // console.log(`Unassigned or bad transactions: ${}`)
+  const incomeCategories = categoryTransactionsTotals.filter(([c,..._]) => c && c.type === 'income');
+  const expenseCategories = categoryTransactionsTotals.filter(
+    ([c,..._]) => c && c.type === 'expense',
+  );
+  console.log(`FIRST`)
+  console.log(JSON.stringify(expenseCategories[0]))
   return div(
     { class: 'categories-lists' },
     div(
@@ -68,16 +86,14 @@ export const CategoriesLists = ({
       { class: 'categoriesholder' },
       div(
         h4('Income'),
-        state.categories
-          .filter((c) => c.type === 'income')
-          .map((v, i) =>
-            CategoryRow(v, {
-              onClick: (e) => onClickCategory(v, i, e),
-              total: Math.floor(Math.random() * ((v?.goal ?? 0) + 10 - 0) + 0),
-            }),
-          ),
+        incomeCategories.map(([v,ts,total], i) =>
+          CategoryRow(v, {
+            onClick: (e) => onClickCategory(v, i, e),
+            total: total,
+          }),
+        ),
         /*
-        vanX.list(div, state.categories.filter(c => c.type ==='income'), (v, deleter, k) =>
+        vanX.list(div, states.categories.filter(c => c.type ==='income'), (v, deleter, k) =>
           CategoryRow(v, {
             onClick: (e) => onClickCategory(v, k, e),
             total: Math.floor(Math.random() * ((v?.goal ?? 0) + 10 - 0) + 0),
@@ -87,12 +103,10 @@ export const CategoriesLists = ({
       ),
       div(
         h4('Expenses'),
-        state.categories
-          .filter((c) => c.type === 'expense')
-          .map((v, i) =>
+       	expenseCategories.map(([v,ts,total], i) =>
             CategoryRow(v, {
               onClick: (e) => onClickCategory(v, i, e),
-              total: Math.floor(Math.random() * ((v?.goal ?? 0) + 10 - 0) + 0),
+              total: total,
             }),
           ),
       ),
@@ -101,6 +115,7 @@ export const CategoriesLists = ({
 };
 
 const CategoryRow = (category, { onClick, total = 0.0 }) => {
+	console.log(`Category total: ${ total}`)
   const categoryVal = category;
   const hasGoal = categoryVal.goal !== undefined && categoryVal.goal !== null;
   const isExpense = categoryVal.type === 'expense';
