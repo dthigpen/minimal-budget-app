@@ -239,3 +239,40 @@ main.container {
   --pico-form-element-spacing-vertical: 0.3rem;
   --pico-form-element-spacing-horizontal: 0.5rem;
 }
+
+/* tabs START */
+.tabs {
+  display: flex;
+  gap: 1rem;
+  border-bottom: 2px solid #ccc;
+}
+
+.tab {
+  padding: 0.5em 0;
+  cursor: pointer;
+  position: relative;
+}
+
+.tab.active::after {
+  content: '';
+  display: block;
+  height: 4px;
+  background: #e91e63;
+  margin-top: 6px;
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+}
+
+.tab-content {
+  padding: 1rem 0;
+}
+
+/* tabs END */
+.category-type-title h4 {
+  /* font-size: 2rem; */
+  display: inline;
+  margin: 0;
+  padding: 0;
+}

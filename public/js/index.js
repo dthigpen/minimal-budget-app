@@ -7,6 +7,7 @@ import { CategoryDialog } from './category-dialog.js';
 import { CategoriesLists } from './categories-lists.js';
 import { TransactionsList } from './transactions-list.js';
 import { TransactionDialog } from './transaction-dialog.js';
+// import { Tabs } from './tabs.js';
 import { formatMoney, formatDate } from './util.js';
 import { initDialog, initDialogWithButtons } from './dialog-util.js';
 import { Modal, MessageBoard, Tabs, Banner } from './vender/van-ui.js';
@@ -14,10 +15,14 @@ import { Route, goto } from './vender/router.js';
 const {
   a,
   select,
+  section,
+  cite,
+  blockquote,
   option,
   details,
   summary,
   label,
+  figure,
   fieldset,
   legend,
   article,
@@ -385,6 +390,13 @@ const App = () => {
         },
       }),
     () => Settings({ inDemo }),
+    // () =>
+    //   Route({
+    //     rule: 'test',
+    //     Loader() {
+    //
+    //     },
+    //   }),
   );
 };
 
@@ -403,6 +415,15 @@ const Settings = ({ inDemo }) =>
           { onclick: () => (inDemo.val = !inDemo.val) },
           inDemo.val ? 'Turn Off' : 'Turn On',
         ),
+        button(
+          {
+            onclick: () => {
+              localStorage.removeItem(DEMO_DATA_KEY);
+              location.reload();
+            },
+          },
+          'Reset Demo',
+        ),
       );
     },
     async onLoad() {
@@ -411,5 +432,5 @@ const Settings = ({ inDemo }) =>
     },
   });
 setTimeout(() => {
-	van.add(document.body, App());
-}, 8000)
+  van.add(document.body, App());
+}, 8000);

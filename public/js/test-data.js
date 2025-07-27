@@ -34,22 +34,22 @@ export function generateCategories() {
     {
       name: 'Entertainment',
       type: 'expense',
-      goal: 50,
+      budgeted: 50,
     },
     {
       name: 'Groceries',
       type: 'expense',
-      goal: 250,
+      budgeted: 250,
     },
     {
       name: 'Household Goods',
       type: 'expense',
-      goal: 30,
+      budgeted: 30,
     },
     {
       name: 'Travel',
       type: 'expense',
-      // goal: {
+      // budgeted: {
       // 	period: 'year',
       // 	amount: 2000,
       // }
@@ -57,17 +57,25 @@ export function generateCategories() {
     {
       name: 'Hobbies',
       type: 'expense',
-      goal: 30,
+      budgeted: 30,
     },
     {
       name: 'Clothes',
       type: 'expense',
-      goal: 30,
+      budgeted: 30,
     },
     {
       name: 'Transportation',
       type: 'expense',
-      goal: 80,
+      budgeted: 80,
+    },
+    {
+      name: 'Medical',
+      type: 'fund',
+      balance: 4512.12,
+      goal: 10000,
+      spent: 120.34,
+      contributed: 150,
     },
   ];
 }
@@ -254,7 +262,7 @@ export function generateBudget() {
       },
       {
         name: 'Groceries',
-        goal: 1000,
+        budgeted: 1000,
         includes: [
           {
             description: 'WAL-MART|COSTCO',
@@ -263,7 +271,7 @@ export function generateBudget() {
       },
       {
         name: 'Entertainment',
-        goal: 150,
+        budgeted: 150,
         includes: [
           {
             description: 'THEATER',
@@ -272,7 +280,7 @@ export function generateBudget() {
       },
       {
         name: 'Household',
-        goal: 200,
+        budgeted: 200,
         includes: [
           {
             description: 'HOME DEPOT',

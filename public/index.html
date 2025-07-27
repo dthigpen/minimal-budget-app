@@ -20,6 +20,28 @@
           return Object.prototype.hasOwnProperty.call(obj, prop);
         };
       }
+      // Shim for Object.groupBy
+      if (!Object.groupBy) {
+        Object.groupBy = function (items, callback) {
+          if (items == null) {
+            throw new TypeError('Cannot convert undefined or null to object');
+          }
+          if (typeof callback !== 'function') {
+            throw new TypeError(callback + ' is not a function');
+          }
+
+          const result = {};
+          for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+            const key = callback(item, i, items);
+            if (!Object.prototype.hasOwnProperty.call(result, key)) {
+              result[key] = [];
+            }
+            result[key].push(item);
+          }
+          return result;
+        };
+      }
       // Shim for Array.prototype.at
       if (!Array.prototype.at) {
         Array.prototype.at = function (index) {
