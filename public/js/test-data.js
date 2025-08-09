@@ -15,6 +15,7 @@ function getRandomItem(arr) {
   return arr[getRandomInt(0, arr.length - 1)];
 }
 
+/*
 export function generateCategories() {
   return [
     {
@@ -330,4 +331,118 @@ export function saveTestDataIntoStorage() {
     settings: generateSettings(),
   };
   localStorage.setItem(APP_STATE_DEMO_MODE_STORAGE_KEY, JSON.stringify(state));
+}
+
+*/
+
+function generateSettings() {
+  return {
+    currency: 'USD',
+  };
+}
+
+function generateFund(name, goal = 1000) {
+  const budgeted = Math.floor(goal * 0.2);
+  const balance = Math.floor(goal * 0.6);
+  const contributed = Math.floor(budgeted * 0.8);
+  const actual = contributed;
+  return {
+    name,
+    goal,
+    balance,
+    budgeted,
+    actual,
+    notes: `Fund for ${name.toLowerCase()}`,
+  };
+}
+
+function generateExpense(name, budgeted = 300) {
+  const actual = Math.floor(budgeted * (0.7 + Math.random() * 0.6));
+  return {
+    name,
+    budgeted,
+    actual,
+    notes: `Expense for ${name.toLowerCase()}`,
+  };
+}
+
+function generateIncome(name, budgeted = 2500) {
+  const actual = Math.floor(budgeted * (0.9 + Math.random() * 0.2));
+  return {
+    name,
+    budgeted,
+    actual,
+    notes: `Income from ${name.toLowerCase()}`,
+  };
+}
+
+function generateTransaction(date, amount, category, description) {
+  return {
+    date,
+    amount,
+    category,
+    description,
+    notes: `Transaction for ${description.toLowerCase()}`,
+  };
+}
+
+function generateBudget(period = '2025-08', closed = false) {
+  const funds = [
+    generateFund('Medical', 1500),
+    generateFund('Emergency Fund', 3000),
+  ];
+
+  const expenses = [
+    generateExpense('Groceries', 400),
+    generateExpense('Internet', 60),
+    generateExpense('Utilities', 150),
+  ];
+
+  const income = [
+    generateIncome('Job', 3000),
+    generateIncome('Freelance', 500),
+  ];
+
+  const transactions = [
+    generateTransaction(`${period}-01`, -75, 'Groceries', 'Supermarket'),
+    generateTransaction(`${period}-03`, -45, 'Utilities', 'Electric bill'),
+    generateTransaction(`${period}-05`, 3000, 'Job', 'Paycheck'),
+    generateTransaction(`${period}-10`, -120, 'Medical', 'Doctor visit'),
+    generateTransaction(`${period}-15`, 150, 'Freelance', 'Logo design'),
+  ];
+
+  return {
+    name: period,
+    period,
+    notes: `Monthly budget for ${period}`,
+    startingSavings: funds.reduce((acc, f) => acc + f.balance, 0) - 50,
+    funds,
+    expenses,
+    income,
+    transactions,
+    closedAt: closed ? `${period}-30T23:59:00Z` : null,
+  };
+}
+
+export function generateTestData() {
+  const settings = generateSettings();
+  const budgets = [
+    generateBudget('2025-06', true),
+    generateBudget('2025-07', true),
+    generateBudget('2025-08', false),
+  ];
+  const unbudgetedTransactions = [
+    generateTransaction(
+      '2025-08-02',
+      -40,
+      'Groceries',
+      'Unassigned shop visit',
+    ),
+  ];
+
+  return {
+    settings,
+    budgets,
+    unbudgetedTransactions,
+  };
 }

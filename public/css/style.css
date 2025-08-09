@@ -27,38 +27,50 @@
   }
 }
 
+.vc {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.hc {
+  display: flex;
+  flex-direction: row;
+  gap: 0.25rem;
+  justify-content: space-between;
+}
+
 .category-row {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.5rem;
   padding: 0.1rem 1rem;
 
-  /* &:hover { */
-  /* 	background-color: var(--pico-secondary-hover-background) */
-  /* } */
+  > .name {
+    font-size: 1.4rem;
+  }
 
-  > .holder {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-
-    > .name {
-      font-size: 1.2rem;
+  .amount.pos {
+    &::before {
+      content: '+';
     }
+    color: green;
+  }
 
-    > .amounts {
-      display: flex;
-      gap: 0.5rem;
+  .amount.neg {
+    &::before {
+      content: '-';
     }
+    color: red;
   }
 
-  > progress.-bad {
-    --pico-progress-color: #b22222;
-  }
-
-  > progress.-good {
-    --pico-progress-color: green;
-  }
+  /*   > progress.-bad { */
+  /*     --pico-progress-color: #b22222; */
+  /*   } */
+  /*  */
+  /*   > progress.-good { */
+  /*     --pico-progress-color: green; */
+  /*   } */
 }
 
 nav {
@@ -243,6 +255,7 @@ main.container {
 /* tabs START */
 .tabs {
   display: flex;
+  justify-content: center;
   gap: 1rem;
   border-bottom: 2px solid #ccc;
 }
@@ -251,6 +264,9 @@ main.container {
   padding: 0.5em 0;
   cursor: pointer;
   position: relative;
+  max-width: 20ch;
+  flex: 1 1 auto;
+  text-align: center;
 }
 
 .tab.active::after {
@@ -275,4 +291,24 @@ main.container {
   display: inline;
   margin: 0;
   padding: 0;
+}
+
+.summary-card {
+  /* .rows { */
+  /* 	display: flex; */
+  /* 	flex-direction: column; */
+  /* } */
+  /* .row { */
+  /* 	display: flex; */
+  /* 	justify-content: space-b */
+  /* } */
+  max-width: 20rem;
+  header {
+    text-align: center;
+  }
+
+  input {
+  	max-width: 8rem;
+  	padding-bottom: 0;
+  }
 }

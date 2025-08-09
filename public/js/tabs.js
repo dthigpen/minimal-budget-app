@@ -45,61 +45,32 @@ const {
   progress,
 } = van.tags;
 
-export const Tabs = (tabOptions) => {
+const Tab = (id, label, selectedTab) =>
+  span(
+    {
+      class: () => 'tab' + (selectedTab.val === id ? ' active' : ''),
+      onclick: () => (selectedTab.val = id),
+    },
+    label,
+  );
+
+const Content = (id, selectedTab, children) =>
+  div(
+    {
+      class: 'tab-content',
+      style: () => `display: ${selectedTab.val === id ? 'block' : 'none'}`,
+    },
+    children,
+  );
+
+export const Tabs = (tabObjects, tabOptions = {}) => {
+  const selectedTab = van.state(tabOptions.selected ?? tabObjects?.[0]?.id);
   return div(
-    { class: 'tab-container' },
-    nav(
-      { role: 'tab-control' },
-      ul(
-        li(label({ for: 'tab1' }, 'Tab 1')),
-        li(label({ for: 'tab2' }, 'Tab 2')),
-        li(label({ for: 'tab3' }, 'Tab 3')),
-      ),
-    ),
+    {},
     div(
-      { role: 'tabs' },
-      section(
-        input({
-          hidden: 'hidden',
-          type: 'radio',
-          name: 'tabs',
-          id: 'tab1',
-          checked: 'checked',
-        }),
-        figure(
-          blockquote(
-            "When you're new to something, you bring an ignorance that can be highly innovative.",
-            footer(cite('– Rick Rubin')),
-          ),
-        ),
-
-        input({
-          hidden: 'hidden',
-          type: 'radio',
-          name: 'tabs',
-          id: 'tab2',
-        }),
-
-        figure(
-          blockquote(
-            'Nothing beats a simple worldview. When we know who is the bad guy, the day has structure.',
-            footer(cite('– Volker Pispers')),
-          ),
-        ),
-
-        input({
-          hidden: 'hidden',
-          type: 'radio',
-          name: 'tabs',
-          id: 'tab3',
-        }),
-        figure(
-          blockquote(
-            'Ignorance is not bliss. Ignorance is poverty. Ignorance is devastation.\nIgnorance is tragedy. And ignorance is illness. It all stems from ignorance.',
-            footer(cite('– Jim Rohn')),
-          ),
-        ),
-      ),
+      { class: 'tabs' },
+      ...tabObjects.map((t) => Tab(t.id, t.label ?? t.id, selectedTab)),
     ),
+    ...tabObjects.map((t) => Content(t.id, selectedTab, t.content ?? [])),
   );
 };
