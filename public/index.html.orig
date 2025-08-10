@@ -23,12 +23,12 @@
       if (!Object.groupBy) {
         Object.groupBy = function (items, callback) {
           if (items == null) {
-            throw new TypeError('Cannot convert undefined or null to object');
+            throw new TypeError("Cannot convert undefined or null to object");
           }
-          if (typeof callback !== 'function') {
-            throw new TypeError(callback + ' is not a function');
+          if (typeof callback !== "function") {
+            throw new TypeError(callback + " is not a function");
           }
-
+      
           const result = {};
           for (let i = 0; i < items.length; i++) {
             const item = items[i];
@@ -51,7 +51,6 @@
         };
       }
     </script>
-    <script type="module" src="js/vender/beer.min.js"></script>
-    <script type="module" src="js/index2.js"></script>
+    <script type="module" src="js/index.js"></script>
   </body>
 </html>

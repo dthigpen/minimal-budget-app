@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@picocss/pico": "^2.0.6",
+    "beercss": "^3.11.33",
     "vanjs-core": "^1.5.3",
     "vanjs-ext": "^0.6.2",
     "vanjs-router": "^2.1.0",
